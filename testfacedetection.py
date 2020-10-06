@@ -17,6 +17,9 @@ while True:
 
     # Detect the faces
     faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+    print(faces)
+    number_of_faces=len(faces)
+    cv2.putText(img,str(number_of_faces),(50,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,0,0))
 
     # Draw the rectangle around each face
     for (x, y, w, h) in faces:
