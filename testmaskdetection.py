@@ -37,6 +37,7 @@ while 1:
 
     # Convert image in black and white
     (thresh, black_and_white) = cv2.threshold(gray, bw_threshold, 255, cv2.THRESH_BINARY)
+
     #cv2.imshow('black_and_white', black_and_white)
 
     # detect face
@@ -78,6 +79,7 @@ while 1:
 
     # Show frame with results
     cv2.imshow('Mask Detection', img)
+
     k = cv2.waitKey(30) & 0xff
     if k == 27:
         break
