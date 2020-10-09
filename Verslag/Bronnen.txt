@@ -1,2 +1,5 @@
 Geef hier al je bronnen die je raadpleegt met de datum van de laatste raadpleging
-
+https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_calib3d/py_calibration/py_calibration.html
+9/10/20 calibratie van camera
+https://docs.opencv.org/2.4/modules/calib3d/doc/camera_calibration_and_3d_reconstruction.html
+9/10/20 rechtzetten van afbeelding
