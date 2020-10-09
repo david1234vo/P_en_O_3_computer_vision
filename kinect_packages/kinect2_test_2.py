@@ -26,6 +26,7 @@ SKELETON_COLORS = [pygame.color.THECOLORS["red"],
 
 class InfraRedRuntime(object):
     def __init__(self):
+        print("intitializing")
         pygame.init()
 
         # Used to manage how fast the screen updates
@@ -38,7 +39,12 @@ class InfraRedRuntime(object):
         self._clock = pygame.time.Clock()
 
         # Kinect runtime object, we want only color and body frames 
-        self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Infrared)
+        self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Depth)
+        print("connected kinect", self._kinect, "/with width:", self._kinect.infrared_frame_desc.Width, "/and height:", self._kinect.infrared_frame_desc.Height)
+        try:
+            print("connected kinect", self._kinect, "/with width:", self._kinect.infrared_frame_desc.Width, "/and height:", self._kinect.infrared_frame_desc.Height)
+        except Exception as e:
+            print("Error on creating runtime object:", e)
 
         # back buffer surface for getting Kinect infrared frames, 8bit grey, width and height equal to the Kinect color frame size
         self._frame_surface = pygame.Surface((self._kinect.infrared_frame_desc.Width, self._kinect.infrared_frame_desc.Height), 0, 24)
@@ -79,12 +85,21 @@ class InfraRedRuntime(object):
                     
 
             # --- Getting frames and drawing  
-            if self._kinect.has_new_infrared_frame():
-                frame = self._kinect.get_last_infrared_frame()
+            # print(self._kinect.has_new_infrared_frame())
+
+            last_frame = self._kinect.get_last_color_frame()
+            # print(last_frame, type(last_frame), np.unique(last_frame))
+
+
+            if self._kinect.has_new_depth_frame():
+                # print("new frame")
+                frame = self._kinect.get_last_depth_frame()
                 self.draw_infrared_frame(frame, self._frame_surface)
+                print(frame, type(frame), frame.shape)
                 frame = None
 
             self._screen.blit(self._frame_surface, (0,0))
+            self._screen.blit(self._frame_surface, (600,0))
             pygame.display.update()
 
             # --- Go ahead and update the screen with what we've drawn.
