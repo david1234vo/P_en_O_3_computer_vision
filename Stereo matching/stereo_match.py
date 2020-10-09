@@ -35,8 +35,12 @@ def write_ply(fn, verts, colors):
 
 def main():
     print('loading images...')
-    imgL = cv.pyrDown(cv.imread('aloeR.png'))  # use cv.pyrDown() to downscale images for faster processing
-    imgR = cv.pyrDown(cv.imread('aloeRR.png'))
+    video_capture1 = cv.VideoCapture(1)
+    video_capture2 = cv.VideoCapture(2)
+    ret, imgL = video_capture1.read()
+    ret, imgR = video_capture2.read()
+    # imgL = cv.pyrDown(cv.VideoCapture())  # use cv.pyrDown() to downscale images for faster processing
+    # imgR = cv.pyrDown(cv.imread('aloeRR.png'))
 
     # disparity range is tuned for 'aloe' image pair
     window_size = 3
@@ -73,6 +77,7 @@ def main():
     print('%s saved' % out_fn)
 
     cv.imshow('left', imgL)
+    cv.imshow('RIght',imgR)
     cv.imshow('disparity', (disp-min_disp)/num_disp)
     cv.waitKey()
 
