@@ -38,7 +38,7 @@ while True:
     cv2.imshow("imgR",imgR)
     cv2.imshow("imgL",imgL)
 
-    disp = stereo.compute(imgL, imgR).astype(np.float32) / 16.0
+    disp = stereo.compute(imgL, imgR).astype(np.float32)
 
     print('generating 3d point cloud...',)
     h, w = imgL.shape[:2]
