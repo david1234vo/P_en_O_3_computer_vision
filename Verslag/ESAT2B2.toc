@@ -6,8 +6,8 @@
 \contentsline {subsection}{\numberline {2.1}Probleemstelling}{2}%
 \contentsline {subsection}{\numberline {2.2}Onderwerpalternatieven}{2}%
 \contentsline {subsubsection}{\numberline {2.2.1}Microsoft Kinect}{2}%
-\contentsline {subsubsection}{\numberline {2.2.2}Camera Kalibratie}{2}%
-\contentsline {subsubsection}{\numberline {2.2.3}Enkele Camera met AI}{2}%
+\contentsline {subsubsection}{\numberline {2.2.2}Stereo imaging}{2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Enkele Camera met AI}{3}%
 \contentsline {subsubsection}{\numberline {2.2.4}Motivatie Keuze}{3}%
 \contentsline {subsection}{\numberline {2.3}Methodologie}{3}%
 \contentsline {subsection}{\numberline {2.4}Resultaten}{3}%
