@@ -4,14 +4,14 @@
 \contentsline {section}{\numberline {1}Inleiding}{2}%
 \contentsline {section}{\numberline {2}Hoofdtekst}{2}%
 \contentsline {subsection}{\numberline {2.1}Probleemstelling}{2}%
-\contentsline {subsection}{\numberline {2.2}Onderwerpalternatieven}{2}%
-\contentsline {subsubsection}{\numberline {2.2.1}Microsoft Kinect}{2}%
-\contentsline {subsubsection}{\numberline {2.2.2}Camera Kalibratie}{2}%
-\contentsline {subsubsection}{\numberline {2.2.3}Enkele Camera met AI}{2}%
-\contentsline {subsubsection}{\numberline {2.2.4}Motivatie Keuze}{3}%
-\contentsline {subsection}{\numberline {2.3}Methodologie}{3}%
-\contentsline {subsection}{\numberline {2.4}Resultaten}{3}%
-\contentsline {subsection}{\numberline {2.5}Discussie}{3}%
-\contentsline {subsubsection}{\numberline {2.5.1}Voorstellen Verdere Uitwerking}{3}%
-\contentsline {section}{\numberline {3}Besluit en Verdere Planning}{3}%
-\contentsline {section}{\numberline {4}Vakintegratie}{3}%
+\contentsline {subsection}{\numberline {2.2}Onderwerpalternatieven}{3}%
+\contentsline {subsubsection}{\numberline {2.2.1}Microsoft Kinect}{3}%
+\contentsline {subsubsection}{\numberline {2.2.2}Stereo imaging}{3}%
+\contentsline {subsubsection}{\numberline {2.2.3}Enkele Camera met AI}{3}%
+\contentsline {subsubsection}{\numberline {2.2.4}Motivatie Keuze}{4}%
+\contentsline {subsection}{\numberline {2.3}Methodologie}{4}%
+\contentsline {subsection}{\numberline {2.4}Resultaten}{4}%
+\contentsline {subsection}{\numberline {2.5}Discussie}{4}%
+\contentsline {subsubsection}{\numberline {2.5.1}Voorstellen Verdere Uitwerking}{4}%
+\contentsline {section}{\numberline {3}Besluit en Verdere Planning}{4}%
+\contentsline {section}{\numberline {4}Vakintegratie}{4}%
