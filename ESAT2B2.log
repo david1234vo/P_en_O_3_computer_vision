@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.6.29) (preloaded format=pdflatex 2020.10.7)  10 OCT 2020 14:22
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.6.29) (preloaded format=pdflatex 2020.10.7)  10 OCT 2020 14:21
 entering extended mode
 **./ESAT2B2.tex
 (ESAT2B2.tex
@@ -226,7 +226,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 
 {C:/Users/bramv/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
 
-LaTeX Warning: Empty `thebibliography' environment on input line 76.
+LaTeX Warning: Empty `thebibliography' environment on input line 75.
 
 (ESAT2B2.lof)
 \tf@lof=\write4
@@ -239,8 +239,8 @@ LaTeX Warning: Empty `thebibliography' environment on input line 76.
  [3] (ESAT2B2.aux) ) 
 Here is how much of TeX's memory you used:
  3135 strings out of 480790
- 42734 string characters out of 2897301
- 293415 words of memory out of 3000000
+ 42678 string characters out of 2897301
+ 292415 words of memory out of 3000000
  19113 multiletter control sequences out of 15000+200000
  538812 words of font info for 48 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -250,7 +250,7 @@ ublic/amsfonts/cm/cmbx10.pfb><C:/Users/bramv/AppData/Local/Programs/MiKTeX/font
 s/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/bramv/AppData/Local/Programs/Mi
 KTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/bramv/AppData/Local/Pr
 ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on ESAT2B2.pdf (3 pages, 65480 bytes).
+Output written on ESAT2B2.pdf (3 pages, 63318 bytes).
 PDF statistics:
  28 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
