@@ -1,7 +1,7 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.6.29) (preloaded format=pdflatex 2020.10.7)  9 OCT 2020 17:49
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.6.29) (preloaded format=pdflatex 2020.10.7)  10 OCT 2020 14:21
 entering extended mode
-**./document.tex
-(document.tex
+**./ESAT2B2.tex
+(ESAT2B2.tex
 LaTeX2e <2020-02-02> patch level 5
 L3 programming layer <2020-06-18>
 (C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -122,6 +122,16 @@ File: babel.def 2020/06/10 3.45 Babel common definitions
 File: bblopts.cfg 2005/09/08 v0.1 add Arabic and Farsi to "declared" options of
  babel
 )
+(C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/babel-english\english.l
+df
+Language: english 2017/06/06 v3.3r English support from the babel system
+Package babel Info: \l@canadian = using hyphenrules for english
+(babel)             (\language0) on input line 102.
+Package babel Info: \l@australian = using hyphenrules for ukenglish
+(babel)             (\language73) on input line 105.
+Package babel Info: \l@newzealand = using hyphenrules for ukenglish
+(babel)             (\language73) on input line 108.
+)
 (C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/babel-dutch\dutch.ldf
 Language: dutch 2005/03/30 v3.8i Dutch support from the babel system
 Package babel Info: Making " an active character on input line 132.
@@ -151,28 +161,31 @@ File: pdftex.def 2018/01/08 v1.0l Graphics/color driver for pdftex
 \Gin@req@height=\dimen145
 \Gin@req@width=\dimen146
 )
+(C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/tools\indentfirst.sty
+Package: indentfirst 1995/11/23 v1.03 Indent first paragraph (DPC)
+)
 (C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdf
 mode.def
 File: l3backend-pdfmode.def 2020-06-29 L3 backend support: PDF mode
 \l__kernel_color_stack_int=\count189
 \l__pdf_internal_box=\box47
-) (document.aux)
-\openout1 = `document.aux'.
+) (ESAT2B2.aux)
+\openout1 = `ESAT2B2.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 16.
-LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
 
 (C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
 ii
@@ -194,62 +207,52 @@ ase.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 85.
-)
-LaTeX Font Info:    Trying to load font information for U+msa on input line 17.
-
+) (ESAT2B2.toc
+LaTeX Font Info:    Trying to load font information for U+msa on input line 6.
 
 (C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 17.
-
+LaTeX Font Info:    Trying to load font information for U+msb on input line 6.
 
 (C:\Users\bramv\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-Underfull \hbox (badness 10000) in paragraph at lines 21--22
+))
+\tf@toc=\write3
+\openout3 = `ESAT2B2.toc'.
 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 23--24
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 25--26
-
- []
 
 [1
 
-{C:/Users/bramv/AppData/Local/MiKTeX/pdftex/config/pdftex.map}] [2]
-(document.aux) ) 
+{C:/Users/bramv/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
+
+LaTeX Warning: Empty `thebibliography' environment on input line 75.
+
+(ESAT2B2.lof)
+\tf@lof=\write4
+\openout4 = `ESAT2B2.lof'.
+
+ [2] (ESAT2B2.lot)
+\tf@lot=\write5
+\openout5 = `ESAT2B2.lot'.
+
+ [3] (ESAT2B2.aux) ) 
 Here is how much of TeX's memory you used:
- 3095 strings out of 480790
- 41618 string characters out of 2897301
- 292128 words of memory out of 3000000
- 19088 multiletter control sequences out of 15000+200000
- 540429 words of font info for 54 fonts, out of 3000000 for 9000
+ 3135 strings out of 480790
+ 42678 string characters out of 2897301
+ 292415 words of memory out of 3000000
+ 19113 multiletter control sequences out of 15000+200000
+ 538812 words of font info for 48 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
- 30i,8n,31p,487b,201s stack positions out of 5000i,500n,10000p,200000b,50000s
- <C:\Users\bramv\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/
-ec/dpi600\tcrm1095.pk><C:/Users/bramv/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/amsfonts/cm/cmbx12.pfb><C:/Users/bramv/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/bramv/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/bramv/AppData/Local/
-Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/bramv/AppDat
-a/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/bram
-v/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Us
-ers/bramv/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pf
-b><C:/Users/bramv/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
-cmr8.pfb><C:/Users/bramv/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfo
-nts/cm/cmsy10.pfb><C:/Users/bramv/AppData/Local/Programs/MiKTeX/fonts/type1/pub
-lic/amsfonts/cm/cmsy8.pfb><C:/Users/bramv/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/amsfonts/cm/cmti10.pfb>
-Output written on document.pdf (2 pages, 114953 bytes).
+ 30i,4n,31p,1079b,192s stack positions out of 5000i,500n,10000p,200000b,50000s
+<C:/Users/bramv/AppData/Local/Programs/MiKTeX/fonts/type1/p
+ublic/amsfonts/cm/cmbx10.pfb><C:/Users/bramv/AppData/Local/Programs/MiKTeX/font
+s/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/bramv/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/bramv/AppData/Local/Pr
+ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+Output written on ESAT2B2.pdf (3 pages, 63318 bytes).
 PDF statistics:
- 58 PDF objects out of 1000 (max. 8388607)
+ 28 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 
