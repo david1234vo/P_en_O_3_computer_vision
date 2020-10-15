@@ -1,4 +1,5 @@
 import time
+import timeit
 import numpy as np
 import cv2
 import random
@@ -24,35 +25,41 @@ not_weared_mask = "Please wear MASK to defeat Corona"
 
 def crop_image(img, pos=None):
     img_shape = img.shape
-    y_img = img_shape[0]
-    x_img = img_shape[1]
+    x_img = img_shape[0]
+    y_img = img_shape[1]
     res = img_shape[0] / img_shape[1]
     if not pos:
-        pos_y = int(img_shape[0] / 2)
-        pos_x = int(img_shape[1] / 2)
+        pos_y = int(y_img / 2)
+        pos_x = int(x_img / 2)
     else:
         pos_y = int(pos[0])
         pos_x = int(pos[1])
     breed = int(104)
     hoog = int(res * breed)
-    print(pos_y, pos_x)
-    y_min = pos_y - hoog
-    print(y_min)
+    #print(pos_x, pos_y)
+    y_min = pos_y - breed
+    y_max = pos_y + breed
+    x_min = pos_x - hoog
+    x_max = pos_x + hoog
+    #print(x_min,x_max,y_min,y_max)
     if y_min < 1:
-        y_min = 1
-    y_max = pos_y + hoog
-    print(y_max)
+        y_min = 0
+        y_max = y_min + (2 * breed)
+
     if y_max > y_img:
-        y_min = y_img
-    x_min = pos_x - breed
+        y_max = y_img
+        y_min = y_img - (2 * breed)
+
     if x_min < 1:
-        x_min = 1
-    x_max = pos_x + breed
+        x_min = 0
+        x_max = x_min + (2 * hoog)
+
     if x_max > x_img:
         x_max = x_img
+        x_min = x_img - (2 * hoog)
 
-    crop = img[y_min:y_max, x_min:x_max]
-    print(crop.shape)
+    crop = img[x_min:x_max, y_min:y_max]
+    #print(crop.shape)
 
     scale_percent = 100  # percent of original size
     width = int(img.shape[1] * scale_percent / 100)
@@ -64,8 +71,8 @@ def crop_image(img, pos=None):
 
 def position_face(img):
     img_shape = img.shape
-    y_img = img_shape[0]
-    x_img = img_shape[1]
+    x_img = img_shape[0]
+    y_img = img_shape[1]
     # Convert to grayscale
     grijs = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -73,22 +80,26 @@ def position_face(img):
     gezicht = face_cascade.detectMultiScale(grijs, 1.1, 4)
     if isinstance(gezicht, np.ndarray):
         pos_face = (gezicht[0][0], gezicht[0][1])
+        mid_face = (pos_face[0]+int(gezicht[0][2]/2),pos_face[1]+int(gezicht[0][3]/2))
+        print(pos_face)
+        #print(pos_face)
     else:
-        pos_face = (int(x_img / 2), int(y_img / 2))
-    if not 0 < pos_face[0] < y_img or not 0 < pos_face[1] < x_img:
-        pos_face = (int(x_img / 2), int(y_img / 2))
-    print(pos_face)
-    for (x, y, w, h) in gezicht:
-        cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    cv2.circle(img, pos_face, 5, (0, 0, 255), -1)
+        pos_face = (int(y_img / 2), int(x_img / 2))
+        mid_face = pos_face
+    if not 0 <= pos_face[0] <= y_img or not 0 <= pos_face[1] <= x_img:
+        mid_face = (int(y_img / 2), int(x_img / 2))
+    #print(pos_face)
+    #for (y, x, w, h) in gezicht:
+        #cv2.rectangle(img, (y, x), (y + w, x + h), (255, 0, 0), 2)
+    #cv2.circle(img, (0,0), 5, (0, 0, 255), -1)
     # Display
     cv2.imshow('img', img)
-    return pos_face
+    return mid_face
 
 
 # Read video
 cap = cv2.VideoCapture(0)  # op een of andere manier data van kinect binnenkrijgen
-a = True
+a=1
 while 1:
     # Get individual frame
     ret, img = cap.read()
@@ -147,7 +158,7 @@ while 1:
 
                     # cv2.rectangle(img, (mx, my), (mx + mh, my + mw), (0, 0, 255), 3)
                     break
-
+    a+=1
     # Show frame with results
     cv2.imshow('Mask Detection', img)
 
@@ -157,5 +168,5 @@ while 1:
 
 # Release video
 cap.release()
-time.sleep(10)
+# time.sleep(10)
 cv2.destroyAllWindows()
