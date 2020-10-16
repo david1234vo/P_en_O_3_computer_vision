@@ -11,21 +11,21 @@ upper_body = cv2.CascadeClassifier('haarcascade_upperbody.xml')
 bw_threshold = 80
 
 
-def crop_image(img, range):
-    img_shape = img.shape
-    x_img = img_shape[0]
-    y_img = img_shape[1]
-    edge = int((y_img-x_img)/2)
-    res = img_shape[0] / img_shape[1]
+def crop_image(original, face):
+    original_shape = original.shape
+    x_original = original_shape[0]
+    y_original = original_shape[1]
+    edge = int((y_original - x_original) / 2)
+    res = original_shape[0] / original_shape[1]
 
-    if range == [0,0,x_img,y_img]:
-        crop = img[0:x_img,edge:y_img-edge]
+    if range == [0, 0, x_original, y_original]:
+        crop = img[0:x_original, edge:y_original - edge]
     else:
-        pos_y = int(range[0])
-        pos_x = int(range[1])
+        pos_y = int(face[0])
+        pos_x = int(face[1])
 
-        width = int(range[2])
-        height = int(range[3])
+        width = int(face[2])
+        height = int(face[3])
         y_min = pos_y
         y_max = pos_y + width
         x_min = pos_x
@@ -34,41 +34,32 @@ def crop_image(img, range):
         crop = img[x_min:x_max, y_min:y_max]
 
     scale_percent = 100  # percent of original size
-    width_resize = int(x_img * scale_percent / 100)
-    height_resize = int(x_img * scale_percent / 100)
+    width_resize = int(x_original * scale_percent / 100)
+    height_resize = int(x_original * scale_percent / 100)
     dim = (width_resize, height_resize)
     resized = cv2.resize(crop, dim, interpolation=cv2.INTER_AREA)
 
     return resized
 
 
-def position_face(img):
-    img_shape = img.shape
-    x_img = img_shape[0]
-    y_img = img_shape[1]
+def position_faces(original):
+    original_shape = original.shape
+    x_original = original_shape[0]
+    y_original = original_shape[1]
 
     # Convert to grayscale
-    gray_pos = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray_pos = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
 
     # Detect the faces
     faces_pos = face_cascade.detectMultiScale(gray_pos, 1.1, 4)
-
     if isinstance(faces_pos, np.ndarray):
-        range_face = list(faces_pos[0])
-        pos_face = (faces_pos[0][1], faces_pos[0][0])
-        mid_face = (pos_face[0] + int(faces_pos[0][3] / 2), pos_face[1] + int(faces_pos[0][2] / 2))
+        range_face = faces_pos.tolist()
     else:
-        pos_face = (int(x_img / 2), int(y_img / 2))
-        mid_face = pos_face
-        range_face=list([0,0,x_img,y_img])
-    if not 0 <= pos_face[0] <= x_img or not 0 <= pos_face[1] <= y_img:
-        mid_face = (int(x_img / 2), int(y_img / 2))
+        range_face = [[0, 0, x_original, y_original]]
 
-    #for (x_cv, y_cv, w, h) in faces_pos:
-        #cv2.rectangle(img, (x_cv, y_cv), (x_cv + w, y_cv + h), (255, 0, 0), 2)
-    #cv2.circle(img, (range_face[0],range_face[1]), 5, (0, 0, 255), -1)
-    # Display
-    cv2.imshow('img', img)
+    for (x_cv, y_cv, w, h) in faces_pos:
+        cv2.rectangle(img, (x_cv, y_cv), (x_cv + w, y_cv + h), (255, 0, 0), 2)
+    cv2.imshow('img', original)
 
     return range_face
 
@@ -79,12 +70,12 @@ while 1:
     # Get individual frame
     ret, img = cap.read()
     img = cv2.flip(img, 1)
-    range=position_face(img)
-    crop=crop_image(img,range)
-    # Show frame with results
-    cv2.imshow('Mask Detection', crop)
+    faces = position_faces(img)
+    for face in faces:
+        zoom = crop_image(img, face)
+        cv2.imshow('Mask Detection', zoom)
 
-    k = cv2.waitKey(30) & 0xff
+    k = cv2.waitKey(1) & 0xff
     if k == 27:
         break
 

@@ -164,7 +164,7 @@ while 1:
     # Show frame with results
     cv2.imshow('Mask Detection', mask)
 
-    k = cv2.waitKey(30) & 0xff
+    k = cv2.waitKey(1) & 0xff
     if k == 27:
         break
 
