@@ -36,16 +36,17 @@ def write_ply(fn, verts, colors):
 
 def main():
     print('loading images...')
-    video_capture1 = cv.VideoCapture(1)
-    video_capture2 = cv.VideoCapture(2)
-    ret, imgL = video_capture1.read()
-    ret, imgR = video_capture2.read()
+    video_captureL = cv.VideoCapture(1)
+    video_captureR = cv.VideoCapture(0)
+    ret, imgL = video_captureL.read()
+    ret, imgR = video_captureR.read()
+
     # imgL = cv.pyrDown(cv.VideoCapture())  # use cv.pyrDown() to downscale images for faster processing
     # imgR = cv.pyrDown(cv.imread('aloeRR.png'))
     # imgL = cv.pyrDown(imgL)
     # imgR = cv.pyrDown(imgR)
     # disparity range is tuned for 'aloe' image pair
-    window_size = 3
+    window_size = 4
     min_disp = 16
     num_disp = 112 - min_disp
     stereo = cv.StereoSGBM_create(minDisparity=min_disp,
@@ -55,32 +56,73 @@ def main():
                                   P2=32 * 3 * window_size ** 2,
                                   disp12MaxDiff=1,
                                   uniquenessRatio=10,
-                                  speckleWindowSize=200,
-                                  speckleRange=32
+                                  speckleWindowSize=50,
+                                  speckleRange=1
                                   )
 
     print('computing disparity...')
-    disp = stereo.compute(imgL, imgR).astype(np.float32) / 16.0
+
+    cameraRdata = np.load('cameraRparam.npz')
+    h, w = imgR.shape[:2]
+    newcameramtxR, roiR = cv.getOptimalNewCameraMatrix(cameraRdata['mtxR'], cameraRdata['distR'], (w, h), 1, (w, h))
+    imgRFixed = cv.undistort(imgR, cameraRdata['mtxR'], cameraRdata['distR'], None, newcameramtxR)
+
+    cameraLdata = np.load('cameraLparam.npz')
+    h, w = imgL.shape[:2]
+    newcameramtxL, roiL = cv.getOptimalNewCameraMatrix(cameraLdata['mtxL'], cameraLdata['distL'], (w, h), 1, (w, h))
+    imgLFixed = cv.undistort(imgL, cameraLdata['mtxL'], cameraLdata['distL'], None, newcameramtxL)
+
+
+    xR, yR, wR, hR = roiR
+    xL, yL, wL, hL = roiL
+
+    h = min([hL, hR])
+    w = min([wL, wR])
+
+    imgRFixed = imgRFixed[yR:yR + h, xR:xR + w]
+
+    imgLFixed = imgLFixed[yL:yL + h, xL:xL + w]
+
+    disp = stereo.compute(imgLFixed, imgRFixed).astype(np.float32) / 16.0
+    distorted_disp = stereo.compute(imgR, imgL).astype(np.float32) / 16.0
 
     print('generating 3d point cloud...', )
-    h, w = imgL.shape[:2]
+    h, w = imgLFixed.shape[:2]
     f = 0.8 * w  # guess for focal length
     Q = np.float32([[1, 0, 0, -0.5 * w],
                     [0, -1, 0, 0.5 * h],  # turn points 180 deg around x-axis,
                     [0, 0, 0, -f],  # so that y-axis looks up
                     [0, 0, 1, 0]])
     points = cv.reprojectImageTo3D(disp, Q)
-    colors = cv.cvtColor(imgL, cv.COLOR_BGR2RGB)
+    colors = cv.cvtColor(imgLFixed, cv.COLOR_BGR2RGB)
     mask = disp > disp.min()
     out_points = points[mask]
     out_colors = colors[mask]
     out_fn = 'out.ply'
     write_ply(out_fn, out_points, out_colors)
     print('%s saved' % out_fn)
+    
 
-    cv.imshow('left', imgL)
-    cv.imshow('RIght', imgR)
+    print('generating 3d point cloud for distorted...', )
+    h, w = imgL.shape[:2]
+    f = 0.8 * w  # guess for focal length
+    Q = np.float32([[1, 0, 0, -0.5 * w],
+                    [0, -1, 0, 0.5 * h],  # turn points 180 deg around x-axis,
+                    [0, 0, 0, -f],  # so that y-axis looks up
+                    [0, 0, 1, 0]])
+    points = cv.reprojectImageTo3D(distorted_disp, Q)
+    colors = cv.cvtColor(imgL, cv.COLOR_BGR2RGB)
+    mask = distorted_disp > distorted_disp.min()
+    out_points = points[mask]
+    out_colors = colors[mask]
+    out_fn = 'out_distorted.ply'
+    write_ply(out_fn, out_points, out_colors)
+    print('%s saved' % out_fn)
+
+    cv.imshow('Left', imgLFixed)
+    cv.imshow('Right', imgRFixed)
     cv.imshow('disparity', (disp - min_disp) / num_disp)
+    cv.imshow('disparity_distorted',(distorted_disp - min_disp) / num_disp)
     cv.waitKey()
 
     print('Done')
