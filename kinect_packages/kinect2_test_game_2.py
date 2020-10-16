@@ -25,21 +25,21 @@ SKELETON_COLORS = [pygame.color.THECOLORS["red"],
 
 class BodyGameRuntime(object):
     def __init__(self):
-        pygame.init()
+        # pygame.init()
 
-        self._clock = pygame.time.Clock()
-        self._infoObject = pygame.display.Info()
-        self._screen = pygame.display.set_mode((self._infoObject.current_w >> 1, self._infoObject.current_h >> 1), 
-                                               pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        # self._clock = pygame.time.Clock()
+        # self._infoObject = pygame.display.Info()
+        # self._screen = pygame.display.set_mode((self._infoObject.current_w >> 1, self._infoObject.current_h >> 1), 
+                                               # pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
 
-        pygame.display.set_caption("Kinect for Windows v2 Body Game")
+        # pygame.display.set_caption("Kinect for Windows v2 Body Game")
 
         self._done = False
-        self._clock = pygame.time.Clock()
+        # self._clock = pygame.time.Clock()
         self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body | PyKinectV2.FrameSourceTypes_Depth)
 
-        self._frame_surface = pygame.Surface((self._kinect.color_frame_desc.Width, self._kinect.color_frame_desc.Height), 0, 32)
-        self._depth_surface = pygame.Surface((self._kinect.depth_frame_desc.Width, self._kinect.depth_frame_desc.Height), 0, 32)
+        # self._frame_surface = pygame.Surface((self._kinect.color_frame_desc.Width, self._kinect.color_frame_desc.Height), 0, 32)
+        # self._depth_surface = pygame.Surface((self._kinect.depth_frame_desc.Width, self._kinect.depth_frame_desc.Height), 0, 32)
 
         self._bodies = None
 
@@ -129,16 +129,16 @@ class BodyGameRuntime(object):
         # -------- Main Program Loop -----------
         # while not self._done:
         # --- Main event loop
-        for event in pygame.event.get(): # User did something
-            if event.type == pygame.QUIT: # If user clicked close
-                self._done = True # Flag that we are done so we exit this loop
-                self._kinect.close()
-                pygame.quit()
-                return "quit"
+        # for event in pygame.event.get(): # User did something
+        #     if event.type == pygame.QUIT: # If user clicked close
+        #         self._done = True # Flag that we are done so we exit this loop
+        #         self._kinect.close()
+        #         pygame.quit()
+        #         return "quit"
 
-            elif event.type == pygame.VIDEORESIZE: # window resized
-                self._screen = pygame.display.set_mode(event.dict['size'], 
-                                           pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+            # elif event.type == pygame.VIDEORESIZE: # window resized
+            #     self._screen = pygame.display.set_mode(event.dict['size'], 
+            #                                pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
                 
         # --- Game logic should go here
 
@@ -147,15 +147,16 @@ class BodyGameRuntime(object):
 
         new_depth_frame = False
         new_body_frame = False
+        color_frame = None
 
         if self._kinect.has_new_color_frame():
             color_frame = self._kinect.get_last_color_frame()
-            self.draw_color_frame(color_frame, self._frame_surface)
+            # self.draw_color_frame(color_frame, self._frame_surface)
 
         if self._kinect.has_new_depth_frame():
             # print("new frame")
             depth_frame = self._kinect.get_last_depth_frame()
-            self.draw_depth_frame(depth_frame, self._depth_surface)
+            # self.draw_depth_frame(depth_frame, self._depth_surface)
             depth_frame = depth_frame.reshape(424,512)
             # print(depth_frame)
             new_depth_frame = True
@@ -191,26 +192,26 @@ class BodyGameRuntime(object):
                     # print(depth_frame, type(depth_frame), depth_frame.shape, int(head_joint_depth.x), int(head_joint_depth.y))
 
                     # print(depth_frame[int(head_joint_depth.x), int(head_joint_depth.y)])
-                    pygame.draw.circle(self._frame_surface, (100, 200, 100), (int(head_joint.x), int(head_joint.y)), 10)
-                    self.draw_body(joints, joint_points, SKELETON_COLORS[i])
+                    # pygame.draw.circle(self._frame_surface, (100, 200, 100), (int(head_joint.x), int(head_joint.y)), 10)
+                    # self.draw_body(joints, joint_points, SKELETON_COLORS[i])
 
         # --- copy back buffer surface pixels to the screen, resize it if needed and keep aspect ratio
         # --- (screen size may be different from Kinect's color frame size) 
-        h_to_w = float(self._frame_surface.get_height()) / self._frame_surface.get_width()
-        target_height = int(h_to_w * self._screen.get_width())
-        surface_to_draw = pygame.transform.scale(self._frame_surface, (self._screen.get_width(), target_height));
-        self._screen.blit(surface_to_draw, (0,0))
+        # h_to_w = float(self._frame_surface.get_height()) / self._frame_surface.get_width()
+        # target_height = int(h_to_w * self._screen.get_width())
+        # surface_to_draw = pygame.transform.scale(self._frame_surface, (self._screen.get_width(), target_height));
+        # self._screen.blit(surface_to_draw, (0,0))
         # surface_to_draw = pygame.transform.scale(self._depth_surface, (self._screen.get_width(), target_height));
         # self._screen.blit(self._depth_surface, (700,0))
         surface_to_draw = None
 
-        pygame.display.update()
+        # pygame.display.update()
 
         # --- Go ahead and update the screen with what we've drawn.
-        pygame.display.flip()
+        # pygame.display.flip()
 
         # --- Limit to 60 frames per second
-        self._clock.tick(60)
+        # self._clock.tick(60)
 
         return head_locations, color_frame
 
@@ -233,22 +234,47 @@ def convert_to_coordinates(location, window_size):
     return [horizontal_coordinate, vertical_coordinate, depth]
 
 
+import pygame, sys
+from pygame.locals import *
+
+
+
+
+pygame.init()
+DISPLAYSURF = pygame.display.set_mode((800, 800))
+pygame.display.set_caption('Hello World!')
+
+
 __main__ = "Kinect v2 Body Game"
 game = BodyGameRuntime();
 window_size = game.get_window_size()
 heads_depth = []
 heads_x = []
 heads_y = []
+
+
+
 while True:
-    head_locations = game.run();
+    head_locations, color_frame = game.run();
     if head_locations == "quit":
         break
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+
+    pygame.display.fill((0,0,0))
+
     for head in head_locations:
         coordinate = convert_to_coordinates(head, window_size)
         print(coordinate)   
         heads_depth.append(coordinate[2])
         heads_x.append(coordinate[0])
         heads_y.append(coordinate[1])
+        pygame.draw.circle(DISPLAYSURF, (100, 200, 100), (int(coordinate[0]/10 + 400), int(coordinate[2]/10 + 200)), 10)
+
+    pygame.display.update()
+
 
 
 
