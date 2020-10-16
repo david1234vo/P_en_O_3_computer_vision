@@ -1,5 +1,4 @@
 import time
-import timeit
 import numpy as np
 import cv2
 import random
@@ -28,44 +27,42 @@ def crop_image(img, pos=None):
     x_img = img_shape[0]
     y_img = img_shape[1]
     res = img_shape[0] / img_shape[1]
+
     if not pos:
         pos_y = int(y_img / 2)
         pos_x = int(x_img / 2)
     else:
-        pos_y = int(pos[0])
-        pos_x = int(pos[1])
-    breed = int(104)
-    hoog = int(res * breed)
-    #print(pos_x, pos_y)
-    y_min = pos_y - breed
-    y_max = pos_y + breed
-    x_min = pos_x - hoog
-    x_max = pos_x + hoog
-    #print(x_min,x_max,y_min,y_max)
+        pos_y = int(pos[1])
+        pos_x = int(pos[0])
+
+    width = int(104)
+    height = int(res * width)
+    y_min = pos_y - width
+    y_max = pos_y + width
+    x_min = pos_x - height
+    x_max = pos_x + height
+
     if y_min < 1:
         y_min = 0
-        y_max = y_min + (2 * breed)
-
+        y_max = y_min + (2 * width)
     if y_max > y_img:
         y_max = y_img
-        y_min = y_img - (2 * breed)
-
+        y_min = y_img - (2 * width)
     if x_min < 1:
         x_min = 0
-        x_max = x_min + (2 * hoog)
-
+        x_max = x_min + (2 * height)
     if x_max > x_img:
         x_max = x_img
-        x_min = x_img - (2 * hoog)
+        x_min = x_img - (2 * height)
 
     crop = img[x_min:x_max, y_min:y_max]
-    #print(crop.shape)
 
     scale_percent = 100  # percent of original size
-    width = int(img.shape[1] * scale_percent / 100)
-    height = int(img.shape[0] * scale_percent / 100)
-    dim = (width, height)
+    width_resize = int(y_img * scale_percent / 100)
+    height_resize = int(x_img * scale_percent / 100)
+    dim = (width_resize, height_resize)
     resized = cv2.resize(crop, dim, interpolation=cv2.INTER_AREA)
+
     return resized
 
 
@@ -73,46 +70,41 @@ def position_face(img):
     img_shape = img.shape
     x_img = img_shape[0]
     y_img = img_shape[1]
+
     # Convert to grayscale
-    grijs = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    gray_pos = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Detect the faces
-    gezicht = face_cascade.detectMultiScale(grijs, 1.1, 4)
-    if isinstance(gezicht, np.ndarray):
-        pos_face = (gezicht[0][0], gezicht[0][1])
-        mid_face = (pos_face[0]+int(gezicht[0][2]/2),pos_face[1]+int(gezicht[0][3]/2))
-        print(pos_face)
-        #print(pos_face)
+    faces_pos = face_cascade.detectMultiScale(gray_pos, 1.1, 4)
+
+    if isinstance(faces_pos, np.ndarray):
+        pos_face = (faces_pos[0][1], faces_pos[0][0])
+        mid_face = (pos_face[0] + int(faces_pos[0][3] / 2), pos_face[1] + int(faces_pos[0][2] / 2))
     else:
-        pos_face = (int(y_img / 2), int(x_img / 2))
+        pos_face = (int(x_img / 2), int(y_img / 2))
         mid_face = pos_face
-    if not 0 <= pos_face[0] <= y_img or not 0 <= pos_face[1] <= x_img:
-        mid_face = (int(y_img / 2), int(x_img / 2))
-    #print(pos_face)
-    #for (y, x, w, h) in gezicht:
-        #cv2.rectangle(img, (y, x), (y + w, x + h), (255, 0, 0), 2)
-    #cv2.circle(img, (0,0), 5, (0, 0, 255), -1)
+    if not 0 <= pos_face[0] <= x_img or not 0 <= pos_face[1] <= y_img:
+        mid_face = (int(x_img / 2), int(y_img / 2))
+
+    # for (x_cv, y_cv, w, h) in faces_pos:
+    # cv2.rectangle(img, (x_cv, y_cv), (x_cv + w, y_cv + h), (255, 0, 0), 2)
+    # cv2.circle(img, (mid_face[1],mid_face[0]), 5, (0, 0, 255), -1)
+
     # Display
     cv2.imshow('img', img)
+
     return mid_face
 
 
-# Read video
-cap = cv2.VideoCapture(0)  # op een of andere manier data van kinect binnenkrijgen
-a=1
-while 1:
-    # Get individual frame
-    ret, img = cap.read()
-    img = cv2.flip(img, 1)
+def mask_recognition(img, depth=None, position=None):
+    # Getting depth from kinect
+    if not depth:
+        depth = 2600
 
-    # binnenkrijgen van diepte kinect
-    depth = 2600
-
-    # binnenkrijgen locatie van gezicht
-
-    # als verder dan 2,5m inzoomen
+    # Zoom if further than 2,5m
     if depth > 2500:
-        position = position_face(img)
+        if not position:
+            position = position_face(img)
         img = crop_image(img, position)
 
     # Convert Image into gray
@@ -158,9 +150,19 @@ while 1:
 
                     # cv2.rectangle(img, (mx, my), (mx + mh, my + mw), (0, 0, 255), 3)
                     break
-    a+=1
+    return img
+
+
+# Read video
+cap = cv2.VideoCapture(0)  # Get video from kinect
+
+while 1:
+    # Get individual frame
+    ret, img = cap.read()
+    img = cv2.flip(img, 1)
+    mask = mask_recognition(img)
     # Show frame with results
-    cv2.imshow('Mask Detection', img)
+    cv2.imshow('Mask Detection', mask)
 
     k = cv2.waitKey(30) & 0xff
     if k == 27:
