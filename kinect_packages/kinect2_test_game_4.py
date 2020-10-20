@@ -201,9 +201,9 @@ class TopDownViewRuntime(object):
                 for second_head in head_locations:
                     if second_head != head:
                         
-                        # distance = self.get_distance(coordinate, second_coordinate)
                         if ([head, second_head] not in combos) and ([second_head, head] not in combos):
                             second_coordinate = self.convert_to_coordinates(second_head)
+                            distance = self.get_distance(coordinate, second_coordinate)
                             
                             pygame.draw.line(self.topdown_surface, (255, 0, 0), self.coordinate_to_pixel(coordinate), self.coordinate_to_pixel(second_coordinate))
                             textsurface = self.myfont.render(str(round(distance/1000, 2)), False, (0, 0, 255))
