@@ -144,8 +144,10 @@ class TopDownViewRuntime(object):
 
         while True:
             if self._kinect.has_new_color_frame():
+
                 color_frame = self._kinect.get_last_color_frame()
                 self.draw_color_frame(color_frame, self.color_surface)
+                
 
             if self._kinect.has_new_body_frame(): 
                 self._bodies = self._kinect.get_last_body_frame()
@@ -153,12 +155,13 @@ class TopDownViewRuntime(object):
                 self.new_body_frame = True
 
             if self._kinect.has_new_depth_frame():
+                print("cframe")
                 self.depth_frame = self._kinect.get_last_depth_frame()
                 self.depth_frame = self.depth_frame.reshape(424,512)
                 self.new_depth_frame = True
 
             head_locations = []
-            head_locations +=  [(0, 0, 0), [4000, 100, 1000]]
+            # head_locations +=  [(0, 0, 0), [4000, 100, 1000]]
 
             head_location_to_add = self.get_head_location()
             if head_location_to_add is not None: head_locations += head_location_to_add
@@ -176,7 +179,7 @@ class TopDownViewRuntime(object):
 
             combos = []
 
-            print(head_locations)
+            # print(head_locations)
 
             for head in head_locations:
                 coordinate = self.convert_to_coordinates(head)

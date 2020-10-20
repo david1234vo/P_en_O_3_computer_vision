@@ -2871,7 +2871,7 @@ from comtypes import _check_version; _check_version('')
 KINECT_SKELETON_COUNT = 6
 
 class DefaultKinectSensor: 
-    _kinect20 = ctypes.WinDLL('C:/ProgramData/Anaconda3/Lib/site-packages/pykinect2/Kinect20')
+    _kinect20 = ctypes.WinDLL('C:/Users/david/Documenten/peno/peno_3_8/Lib/site-packages/pykinect2/Kinect20')
     _GetDefaultKinectSensorProto = _kinect20.GetDefaultKinectSensor
     _GetDefaultKinectSensorProto.argtypes = [ctypes.POINTER(ctypes.POINTER(IKinectSensor))]
     _GetDefaultKinectSensorProto.restype = ctypes.HRESULT 
