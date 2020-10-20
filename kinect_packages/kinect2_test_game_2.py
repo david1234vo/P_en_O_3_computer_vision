@@ -7,6 +7,7 @@ import ctypes
 import _ctypes
 import pygame
 import sys
+import math
 
 if sys.hexversion >= 0x03000000:
     import _thread as thread
@@ -223,6 +224,23 @@ class BodyGameRuntime(object):
         # plt.show()
 
 
+pygame.init()
+display_size = (1000, 600)
+DISPLAYSURF = pygame.display.set_mode(display_size)
+pygame.display.set_caption('Hello World!')
+pygame.font.init()
+myfont = pygame.font.SysFont('Comic Sans MS', 30)
+
+__main__ = "Kinect v2 Body Game"
+game = BodyGameRuntime();
+window_size = game.get_window_size()
+heads_depth = []
+heads_x = []
+heads_y = []
+head_locations = {}
+
+scale = 1/10
+
 def convert_to_coordinates(location, window_size):
     horizontal_factor = 1/1000
     vertical_factor = -1/1000
@@ -234,28 +252,63 @@ def convert_to_coordinates(location, window_size):
     return [horizontal_coordinate, vertical_coordinate, depth]
 
 
+def get_distance(location1, location2):
+    x1, y1, z1 = location1
+    x2, y2, z2 = location2
+    argument = (x1-x2)**2+(y1-y2)**2+(z1-z2)**2
+    if argument < 0:
+        return 0
+    return(math.sqrt((x1-x2)**2+(y1-y2)**2+(z1-z2)**2))
+
+def get_key_nearest(location, dict):
+    if len(dict) > 0 or dict == {}:
+        return None
+    print(dict, len(dict), dict == {})
+    nearest_value = list(dict.values())[0]
+    nearest_key = list(dict.keys())[0]
+    for key in list(dict.keys()):
+        value = dict[key]
+        if get_distance(location, dict[key]) < get_distance(location, nearest_value):
+            nearest_key = key
+            nearest_value = dict[key]
+    return nearest_key
+
+def d3_to_d2(location):
+    return [location[0], location[2]]
+
+def coordinate_to_pixel(location, extra = 0):
+    return (int(location[0]*scale + display_size[0]/2 + extra), int(location[2]*scale +display_size[1]/4 + extra))
+
+def get_middle(location1, location2):
+    x1, y1, z1 = location1
+    x2, y2, z2 = location2
+    return ((x1+x2)/2,(y1+y2)/2,(z1+z2)/2)
+
+def draw_background(surface):
+    surface.fill((0,0,0))
+    pygame.draw.line(surface, (255,255, 255), (int(display_size[0]/2), 0), coordinate_to_pixel((3500, -460, 4500))) 
+    pygame.draw.line(surface, (255,255, 255), (int(display_size[0]/2), 0), coordinate_to_pixel((-3500, -460, 4500))) 
+
 import pygame, sys
 from pygame.locals import *
 
 
+draw_background(DISPLAYSURF)
 
-
-pygame.init()
-DISPLAYSURF = pygame.display.set_mode((800, 800))
-pygame.display.set_caption('Hello World!')
-
-
-__main__ = "Kinect v2 Body Game"
-game = BodyGameRuntime();
-window_size = game.get_window_size()
-heads_depth = []
-heads_x = []
-heads_y = []
 
 
 
 while True:
     head_locations, color_frame = game.run();
+    # if len(head_locations) > 0:
+    #     head_locations +=  [(0, 0, 0), [4000, 100, 1000]]
+    # for head in new_head_locations:
+    #     key = get_key_nearest(head, head_locations)
+    #     if key is None:
+    #         key = 1
+    #     elif get_distance(dict[key], head) > 300:
+    #         key = max(dict.get_keys())+1
+    #     head_locations[key] = head
     if head_locations == "quit":
         break
     for event in pygame.event.get():
@@ -263,7 +316,10 @@ while True:
             pygame.quit()
             sys.exit()
 
-    pygame.display.fill((0,0,0))
+    if head_locations is not None and len(head_locations)>0:
+        draw_background(DISPLAYSURF)
+
+    combos = []
 
     for head in head_locations:
         coordinate = convert_to_coordinates(head, window_size)
@@ -271,9 +327,26 @@ while True:
         heads_depth.append(coordinate[2])
         heads_x.append(coordinate[0])
         heads_y.append(coordinate[1])
-        pygame.draw.circle(DISPLAYSURF, (100, 200, 100), (int(coordinate[0]/10 + 400), int(coordinate[2]/10 + 200)), 10)
+        radius = int(750*scale)
+        # pygame.draw.circle(DISPLAYSURF, (100, 200, 100), (int(coordinate[0]*scale + display_size[0]/2), int(coordinate[2]*scale +display_size[1]/4)), radius)
+        pygame.draw.circle(DISPLAYSURF, (100, 200, 100), coordinate_to_pixel(coordinate), 20)
+        pygame.draw.circle(DISPLAYSURF, (100, 200, 100), coordinate_to_pixel(coordinate), radius, 3)
+        # print("drawing circle", )
+        for second_head in head_locations:
+            if second_head != head:
+                if ([head, second_head] not in combos) and ([second_head, head] not in combos):
+                    # print("drawing line", coordinate_to_pixel(head), coordinate_to_pixel(second_head))
+                    second_coordinate = convert_to_coordinates(second_head, window_size)
+                    pygame.draw.line(DISPLAYSURF, (255, 0, 0), coordinate_to_pixel(coordinate), coordinate_to_pixel(second_coordinate))
+                    # pygame.draw.circle(DISPLAYSURF,(0, 0, 255), coordinate_to_pixel(get_middle(coordinate, second_coordinate)), 20)
+                    textsurface = myfont.render(str(round(get_distance(coordinate, second_coordinate)/1000, 2)), False, (0, 0, 255))
+                    DISPLAYSURF.blit(textsurface, coordinate_to_pixel(get_middle(coordinate, second_coordinate)))
+                    combos.append([head, second_head])
+        print("")
+
 
     pygame.display.update()
+
 
 
 
