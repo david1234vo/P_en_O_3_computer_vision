@@ -80,6 +80,15 @@ class TopDownViewRuntime(object):
             return 0
         return(math.sqrt((x1-x2)**2+(y1-y2)**2+(z1-z2)**2))
 
+    def get_distances(self, location, list_location):
+        to_return = []
+        for second_location in list_location:
+            d = self.get_distance(location, second_location)
+            if d != 0:
+                to_return.append(d)
+        return to_return
+
+
     def get_key_nearest(self, location, dict):
         if len(dict) > 0 or dict == {}:
             return None
@@ -161,7 +170,7 @@ class TopDownViewRuntime(object):
                 self.new_depth_frame = True
 
             head_locations = []
-            # head_locations +=  [(0, 0, 0), [4000, 100, 1000]]
+            head_locations +=  [(0, 0, 0), [4000, 100, 1000]]
 
             head_location_to_add = self.get_head_location()
             if head_location_to_add is not None: head_locations += head_location_to_add
@@ -183,20 +192,25 @@ class TopDownViewRuntime(object):
 
             for head in head_locations:
                 coordinate = self.convert_to_coordinates(head)
-                circle_color = (100, 200, 100)
+                if min(self.get_distances(head, head_locations)) > 1500:
+                    circle_color = (100, 200, 100)
+                else:
+                    circle_color = (255, 0, 0)
                 radius = int(750*self.scale)
+
                 for second_head in head_locations:
                     if second_head != head:
-                        second_coordinate = self.convert_to_coordinates(second_head)
-                        distance = self.get_distance(coordinate, second_coordinate)
+                        
+                        # distance = self.get_distance(coordinate, second_coordinate)
                         if ([head, second_head] not in combos) and ([second_head, head] not in combos):
+                            second_coordinate = self.convert_to_coordinates(second_head)
                             
                             pygame.draw.line(self.topdown_surface, (255, 0, 0), self.coordinate_to_pixel(coordinate), self.coordinate_to_pixel(second_coordinate))
                             textsurface = self.myfont.render(str(round(distance/1000, 2)), False, (0, 0, 255))
                             self.topdown_surface.blit(textsurface, self.coordinate_to_pixel(self.get_middle(coordinate, second_coordinate)))
                             combos.append([head, second_head])
-                        if distance < 1500:
-                            circle_color = (255,0,0)
+                        # if distance < 1500:
+                        #     circle_color = (255,0,0)
 
                 pygame.draw.circle(self.topdown_surface, circle_color, self.coordinate_to_pixel(coordinate), 20)
                 pygame.draw.circle(self.topdown_surface, circle_color, self.coordinate_to_pixel(coordinate), radius, 3)
