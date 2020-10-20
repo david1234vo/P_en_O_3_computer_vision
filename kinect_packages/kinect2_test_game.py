@@ -147,6 +147,7 @@ class BodyGameRuntime(object):
 
         new_depth_frame = False
         new_body_frame = False
+        color_frame = None
 
         if self._kinect.has_new_color_frame():
             color_frame = self._kinect.get_last_color_frame()
@@ -212,7 +213,7 @@ class BodyGameRuntime(object):
         # --- Limit to 60 frames per second
         self._clock.tick(60)
 
-        return head_locations, color_frame
+        return head_locations
 
         # Close our Kinect sensor, close the window and quit.
         
