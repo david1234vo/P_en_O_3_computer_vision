@@ -73,7 +73,7 @@ while 1:
     faces = position_faces(img)
     for face in faces:
         zoom = crop_image(img, face)
-        cv2.imshow('Mask Detection', zoom)
+        cv2.imshow('Zoom', zoom)
 
     k = cv2.waitKey(1) & 0xff
     if k == 27:

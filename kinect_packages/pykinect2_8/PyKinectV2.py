@@ -21,9 +21,6 @@ WSTRING = c_wchar_p
 from _ctypes import COMError
 comtypes.hresult.E_PENDING = 0x8000000A 
 
-import numpy.distutils.system_info as sysinfo
-
-
 class _event(object):
     """class used for adding/removing/invoking a set of listener functions"""
     __slots__ = ['handlers']
@@ -2216,9 +2213,7 @@ tagSTATSTG._fields_ = [
     ('grfStateBits', c_ulong),
     ('reserved', c_ulong),
 ]
-required_size = 64 + sysinfo.platform_bits / 4
-
-assert sizeof(tagSTATSTG) == required_size, sizeof(tagSTATSTG)
+assert sizeof(tagSTATSTG) >= 72, sizeof(tagSTATSTG)
 assert alignment(tagSTATSTG) == 8, alignment(tagSTATSTG)
 IAudioBeamList._methods_ = [
     COMMETHOD(['propget'], HRESULT, 'BeamCount',
@@ -2871,7 +2866,7 @@ from comtypes import _check_version; _check_version('')
 KINECT_SKELETON_COUNT = 6
 
 class DefaultKinectSensor: 
-    _kinect20 = ctypes.WinDLL('C:/ProgramData/Anaconda3/Lib/site-packages/pykinect2/Kinect20')
+    _kinect20 = ctypes.WinDLL('Kinect20')
     _GetDefaultKinectSensorProto = _kinect20.GetDefaultKinectSensor
     _GetDefaultKinectSensorProto.argtypes = [ctypes.POINTER(ctypes.POINTER(IKinectSensor))]
     _GetDefaultKinectSensorProto.restype = ctypes.HRESULT 

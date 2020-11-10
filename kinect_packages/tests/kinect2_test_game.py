@@ -150,6 +150,7 @@ class BodyGameRuntime(object):
         color_frame = None
 
         if self._kinect.has_new_color_frame():
+            print("new color_frame")
             color_frame = self._kinect.get_last_color_frame()
             self.draw_color_frame(color_frame, self._frame_surface)
 
