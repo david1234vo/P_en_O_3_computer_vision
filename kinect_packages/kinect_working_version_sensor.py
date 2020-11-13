@@ -8,6 +8,9 @@ import _ctypes
 import pygame
 import sys
 import math
+import time
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 import pygame, sys
 from pygame.locals import *
@@ -34,32 +37,25 @@ red = (255,0,0)
 
 class TopDownViewRuntime(object):
     def __init__(self):
+        #schaal van topdown en color camera
+        self.topdown_scale = 1/10
+        self.color_scale = 1/4
+
+        #grootte van topdown surface (width, height)
+        self.topdown_surface_size = (1000, 600)
+
+        self.display_pygame = False
+
 
         self._done = False
         self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body | PyKinectV2.FrameSourceTypes_Depth)
         self._bodies = None
-        pygame.init()
-        self._clock = pygame.time.Clock()
-        self._infoObject = pygame.display.Info()
-        # self._screen = pygame.display.set_mode((self._infoObject.current_w >> 1, self._infoObject.current_h >> 1), 
-        #                                        pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
-        self._screen = pygame.display.set_mode((1430,650), 
-                                               pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
-        self.topdown_surface_size = (1000, 600)
-        # self.topdown_surface = pygame.display.set_mode(self.display_size)
-        self.color_factor = 0.25
-        # self.color_surface = pygame.display.set_mode((int(self.display_size[0]*color_factor), int(self.display_size[1]*color_factor)))
-        self.topdown_surface = pygame.Surface(self.topdown_surface_size, 0, 32)
-        self.color_surface = pygame.Surface((self._kinect.color_frame_desc.Width, self._kinect.color_frame_desc.Height), 0, 32)
-        self.info_surface = pygame.Surface((400,800), 0,32)
-        pygame.display.set_caption('Topdown view')
-        pygame.font.init()
-        self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
-        self.scale = 1/10
+        self.frame = 0
+        self.topdown_position = (20,20)
+        self.new_depth_frame = False
+        self.new_body_frame = False
 
-        self.draw_background(self.topdown_surface)
-
-        self._screen.fill(white)
+            
 
     def draw_color_frame(self, frame, target_surface):
         target_surface.lock()
@@ -68,22 +64,42 @@ class TopDownViewRuntime(object):
         del address
         target_surface.unlock()
 
+    def draw_depth_frame(self, frame, target_surface):
+        if frame is None:  # some usb hub do not provide the infrared image. it works with Kinect studio though
+            return
+        target_surface.lock()
+        f8=np.uint8(frame.clip(1,4000)/16.)
+        frame8bit=np.dstack((f8,f8,f8))
+        address = self._kinect.surface_as_array(target_surface.get_buffer())
+        ctypes.memmove(address, frame8bit.ctypes.data, frame8bit.size)
+        del address
+
+    def draw_infrared_frame(self, frame, target_surface):
+        if frame is None:  # some usb hub do not provide the infrared image. it works with Kinect studio though
+            return
+        target_surface.lock()
+        f8=np.uint8(frame.clip(1,4000)/16.)
+        frame8bit=np.dstack((f8,f8,f8))
+        address = self._kinect.surface_as_array(target_surface.get_buffer())
+        ctypes.memmove(address, frame8bit.ctypes.data, frame8bit.size)
+        del address
+        target_surface.unlock()
+
     def get_window_size(self):
         return (float(self._kinect.color_frame_desc.Width), float(self._kinect.color_frame_desc.Height))
 
-    def convert_to_coordinates(self, locations):
-        # print(locations)
+    #convert x,y in frame to x, y irl
+    def convert_to_coordinates(self, locations, window_size = None):
         if len(locations) == 0:
             return
         lis = True
         to_return = []
-        # print(type(locations[0]))
         if type(locations[0]) != list and type(locations[0]) != tuple:
             locations = [locations]
             lis = False
         for location in locations:
-            # print(location)
-            window_size = self.get_window_size()
+            if window_size is None:
+                window_size = self.get_window_size()
             horizontal_factor = 1/1000
             vertical_factor = -1/1000
             x, y, depth = location
@@ -134,7 +150,7 @@ class TopDownViewRuntime(object):
         return [location[0], location[2]]
 
     def coordinate_to_pixel(self, location, extra = 0):
-        return (int(location[0]*self.scale + self.topdown_surface_size[0]/2 + extra), int(location[2]*self.scale + extra))
+        return (int(location[0]*self.topdown_scale + self.topdown_surface_size[0]/2 + extra), int(location[2]*self.topdown_scale + extra))
 
     def get_middle(self, location1, location2):
         x1, y1, z1 = location1
@@ -142,17 +158,9 @@ class TopDownViewRuntime(object):
         return ((x1+x2)/2,(y1+y2)/2,(z1+z2)/2)
 
     def draw_background(self, surface):
-
         surface.fill(black)
-        # (int(self.display_size[0]/2), 0)
-
-        
         width, height = surface.get_size()
         pygame.draw.rect(surface, black, ((0,0), (width, height)), 3)
-        # pygame.draw.line(surface, (255,255, 255), (1,1), (width-1, 1)) 
-        # pygame.draw.line(surface, (255,255, 255), (1,height-1), (width-1, height-1)) 
-        # pygame.draw.line(surface, (255,255, 255), (1,1), (1, height-1)) 
-        # pygame.draw.line(surface, (255,255, 255), (width-1,1), (width-1, height-1)) 
         grid_width = int(width/100)
         grid_height = int(height/100)
         margin = 5
@@ -168,30 +176,24 @@ class TopDownViewRuntime(object):
         pygame.draw.line(surface, black, self.coordinate_to_pixel((0,0,0)), self.coordinate_to_pixel((21000, 0, 27000)), 10) 
         pygame.draw.line(surface, black, self.coordinate_to_pixel((0,0,0)), self.coordinate_to_pixel((-21000, 0, 27000)), 10) 
 
-
-
     def get_head_location(self):
-        # print(self._bodies, "function")
         if self._bodies is not None: 
-            # print("test1")
             head_locations = []
             for i in range(0, self._kinect.max_body_count):
                 body = self._bodies.bodies[i]
                 if not body.is_tracked: 
                     continue 
-                
-                # print("test2")
                 joints = body.joints 
                 joint_points = self._kinect.body_joints_to_color_space(joints)
                 joint_points_depth = self._kinect.body_joints_to_depth_space(joints)
 
                 if self.new_body_frame and self.new_depth_frame:
-                    # print("test3")
                     try:
                         head_joint = joint_points[PyKinectV2.JointType_Head]
                         head_joint_depth = joint_points_depth[PyKinectV2.JointType_Head]
                         depth_value = self.depth_frame[int(head_joint_depth.y), int(head_joint_depth.x)]
                         head_locations.append([head_joint.x, head_joint.y, depth_value])
+                        # print("depth coordinate: ",int(head_joint_depth.y), int(head_joint_depth.x), "/color coordinate:", int(head_joint.x), int(head_joint.y))
                     except Exception as e:
                         if "infinity" not in str(e):
                             print("error before return:", e)
@@ -199,32 +201,25 @@ class TopDownViewRuntime(object):
 
     def draw_heads(self, head_locations):
         combos = []
-
         # print(head_locations)
-
         head_coordinates = self.convert_to_coordinates(head_locations)
-
         text_surfaces_to_draw = []
-
         too_close = 0
         for head in head_locations:
             coordinate = self.convert_to_coordinates(head)
-            
             # print(head_coordinates, self.get_distances(coordinate, head_coordinates))
             try:
                 nearest = min(self.get_distances(coordinate, head_coordinates))
             except Exception as e:
                 nearest = 3000
-                print(e, head_coordinates, self.get_distances(coordinate, head_coordinates))
+                # print(e, head_coordinates, self.get_distances(coordinate, head_coordinates))
             if nearest > 1500:
                 # print(nearest)
                 circle_color = (100, 200, 100)
             else:
                 circle_color = (255, 0, 0)
                 too_close += 1
-            radius = int(750*self.scale)
-
-            
+            radius = int(750*self.topdown_scale)
 
             for second_head in head_locations:
                 if second_head != head:
@@ -252,12 +247,211 @@ class TopDownViewRuntime(object):
             pygame.draw.rect(self.topdown_surface, black, ((text_coordinate[0]-5, text_coordinate[1]-5), (textsurface.get_size()[0]+10, textsurface.get_size()[1]+10)), 3)
             self.topdown_surface.blit(textsurface, text_coordinate)
 
-    def run(self):
+    def get_position_from_frame(self, frame_coordinate):
+        frame_x, frame_y = frame_coordinate
+        depth = self._kinect._mapper.MapCameraPointToDepthSpace(frame_coordinate) 
+        print(frame_x, frame_y, depth)
+
+    def translateAll(self, axis, d):
+        """ Translate all wireframes along a given axis by d units. """
+
+        for wireframe in self.wireframes.values():
+            wireframe.translate(axis, d)
+
+    def scaleAll(self, scale):
+        """ Scale all wireframes by a given scale, centred on the centre of the screen. """
+
+        centre_x = self.width/2
+        centre_y = self.height/2
+
+        for wireframe in self.wireframes.values():
+            wireframe.scale((centre_x, centre_y), scale)
+
+    def rotateAll(self, axis, theta):
+        """ Rotate all wireframe about their centre, along a given axis by a given angle. """
+
+        rotateFunction = 'rotate' + axis
+
+        for wireframe in self.wireframes.values():
+            centre = wireframe.findCentre()
+            getattr(wireframe, rotateFunction)(centre, theta)
+
+    def d3d_map(self):
+        pygame.init()
+        factor = 2
+        self.screen = pygame.display.set_mode((192*factor*2,108*factor*2+192*factor), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        self.color_surface = pygame.Surface((1920, 1080), 0, 32)
+        self.depth_surface = pygame.Surface((self._kinect.depth_frame_desc.Width, self._kinect.depth_frame_desc.Height), 0, 24)
+        self.node_surface = pygame.Surface((1000, 1000), 0, 32)
+        frame = 0
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        key_to_function = {
+        pygame.K_LEFT:   (lambda x: x.translateAll('x', -10)),
+        pygame.K_RIGHT:  (lambda x: x.translateAll('x',  10)),
+        pygame.K_DOWN:   (lambda x: x.translateAll('y',  10)),
+        pygame.K_UP:     (lambda x: x.translateAll('y', -10)),
+        pygame.K_EQUALS: (lambda x: x.scaleAll(1.25)),
+        pygame.K_MINUS:  (lambda x: x.scaleAll( 0.8)),
+        pygame.K_q:      (lambda x: x.rotateAll('X',  0.1)),
+        pygame.K_w:      (lambda x: x.rotateAll('X', -0.1)),
+        pygame.K_a:      (lambda x: x.rotateAll('Y',  0.1)),
+        pygame.K_s:      (lambda x: x.rotateAll('Y', -0.1)),
+        pygame.K_z:      (lambda x: x.rotateAll('Z',  0.1)),
+        pygame.K_x:      (lambda x: x.rotateAll('Z', -0.1))}
+
+        while True:
+            if self._kinect.has_new_color_frame(): 
+                color_frame = self._kinect.get_last_color_frame()
+                self.draw_color_frame(color_frame, self.color_surface)
+                frame += 1
+                print("frame", frame)
+            if self._kinect.has_new_depth_frame():
+                depth_frame = self._kinect.get_last_depth_frame()
+                depth_frame = depth_frame.reshape(424,512)
+                self.draw_infrared_frame(depth_frame, self.depth_surface)
+            pygame.draw.line(self.color_surface, red, (0,800), (1920,800), 10) 
+            
+            
+            # ax.scatter(0,0,0)
+            if frame >= 1:
+                xyz = []
+
+                # for y in range(0,1080, 20):
+                #     print(y)
+                #     for x in range(0,1920, 20):
+                #         try:
+                #             frame_color_coordinate = (x,y)
+                #             depth_value = depth_frame[int(((frame_color_coordinate[1]-540)*0.3673)+212), int(((frame_color_coordinate[0]-960)*0.3673)+256)]
+                #             position = self.convert_to_coordinates([frame_color_coordinate[0], frame_color_coordinate[1], depth_value])
+                #             # print(position)
+                #             xyz.append([position[0], position[1], position[2]])
+                #             # z.append(position[2])
+                #             pixel = self.coordinate_to_pixel(position)
+                #             pygame.draw.circle(self.color_surface, red, pixel, 3)
+                #             # ax.plot(position[0], position[2], position[1], color=(0.5,0,0))
+                #         except Exception as e:
+                #             pass
+                #             # print(x, "failed", e)
+
+                step = 5
+                for y in range(0,512, step):
+                    print(y)
+                    for x in range(0,424, step):
+                        try:
+                            frame_color_coordinate = (x,y)
+                            # depth_value = depth_frame[int(((frame_color_coordinate[1]-540)*0.3673)+212), int(((frame_color_coordinate[0]-960)*0.3673)+256)]
+                            depth_value = depth_frame[y, x]
+                            position = self.convert_to_coordinates([frame_color_coordinate[0], frame_color_coordinate[1], depth_value], (512,424))
+                            # print(position)
+                            xyz.append([position[0], position[1], position[2]])
+                            # z.append(position[2])
+                            pixel = self.coordinate_to_pixel(position)
+                            pygame.draw.circle(self.color_surface, red, pixel, 3)
+                            # ax.plot(position[0], position[2], position[1], color=(0.5,0,0))
+                        except Exception as e:
+                            pass
+                            # print(x, "failed", e)
+                nodes = np.array(xyz)
+                print(nodes, nodes.shape)
+                ones_column = np.ones((len(nodes), 1))
+                nodes = np.hstack((nodes, ones_column))
+                print(nodes, nodes.shape)
+
+                self.node_surface.fill(black)
+                for node in nodes:
+                    pygame.draw.circle(self.node_surface, red, (int(node[0]), int(node[1])), 5, 0)
 
 
-        self.new_depth_frame = False
-        self.new_body_frame = False
+                # ax.scatter([x[0] for x in xyz], [x[2] for x in xyz],[x[1] for x in xyz])
+                # plt.show()
 
+            self.color_surface_to_draw = pygame.transform.scale(self.color_surface, (192*factor,108*factor));
+            self.depth_surface_to_draw = pygame.transform.scale(self.depth_surface, (192*factor,108*factor));
+            self.node_surface_to_draw = pygame.transform.scale(self.node_surface, (192*factor*2,192*factor*2));
+            self.screen.blit(self.color_surface_to_draw, (0,0))
+            self.screen.blit(self.depth_surface_to_draw, (192*factor,0))
+            self.screen.blit(self.node_surface_to_draw, (0,108*factor))
+
+            pygame.display.update()
+            pygame.display.flip()
+
+            # ax.clear()
+            
+            # plt.close()
+
+
+        
+        
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.VIDEORESIZE:
+                    self._screen = pygame.display.set_mode(event.dict['size'],pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        
+
+
+
+
+    def color_and_depth_interface(self):
+        pygame.init()
+        factor = 4
+        self.screen = pygame.display.set_mode((192*factor*2,108*factor), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        self.color_surface = pygame.Surface((1920, 1080), 0, 32)
+        # self.depth_surface = pygame.Surface((424, 512), 0, 32)
+        self.depth_surface = pygame.Surface((self._kinect.depth_frame_desc.Width, self._kinect.depth_frame_desc.Height), 0, 24)
+        print("depth size", (self._kinect.depth_frame_desc.Width, self._kinect.depth_frame_desc.Height), "color size", (self._kinect.color_frame_desc.Width, self._kinect.color_frame_desc.Height))
+        while True:
+            if self._kinect.has_new_color_frame():
+                color_frame = self._kinect.get_last_color_frame()
+                self.draw_color_frame(color_frame, self.color_surface)
+
+            if self._kinect.has_new_depth_frame():
+                depth_frame = self._kinect.get_last_depth_frame()
+                self.draw_infrared_frame(depth_frame, self.depth_surface)
+
+            self.color_surface_to_draw = pygame.transform.scale(self.color_surface, (192*factor,108*factor));
+            self.depth_surface_to_draw = pygame.transform.scale(self.depth_surface, (192*factor,108*factor));
+            self.screen.blit(self.color_surface_to_draw, (0,0))
+            self.screen.blit(self.depth_surface_to_draw, (192*factor,0))
+
+            pygame.display.update()
+            pygame.display.flip()
+
+    def draw_foreground(self):
+        self._screen.blit(self.topdown_surface, self.topdown_position)
+
+        h_to_w = float(self.color_surface.get_height()) / self.color_surface.get_width()
+        target_height = int((h_to_w * self._screen.get_width())*self.color_scale)
+        surface_to_draw = pygame.transform.scale(self.color_surface, (int(self._screen.get_width()*self.color_scale), target_height));
+        color_position = (self.topdown_position[0] + self.topdown_surface.get_size()[0] + 20, self.topdown_position[1])
+        self._screen.blit(surface_to_draw, color_position)
+        info_position = (color_position[0], color_position[1]+surface_to_draw.get_size()[1]+20)
+        self.info_surface = pygame.transform.scale(self.info_surface, (surface_to_draw.get_size()[0], self.topdown_surface.get_size()[1]-surface_to_draw.get_size()[1]-20))
+        self.info_surface.fill(white)
+        pygame.draw.rect(self.info_surface, black, ((0,0), self.info_surface.get_size()), 5)
+        self._screen.blit(self.info_surface, info_position)
+
+        pygame.display.update()
+        pygame.display.flip()
+
+    def user_interface(self):
+        pygame.init()
+        self._clock = pygame.time.Clock()
+        self._infoObject = pygame.display.Info()
+        self._screen = pygame.display.set_mode((1430,650), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        self.topdown_surface = pygame.Surface(self.topdown_surface_size, 0, 32)
+        self.color_surface = pygame.Surface((1920, 1080), 0, 32)
+        self.info_surface = pygame.Surface((400,800), 0,32)
+        pygame.display.set_caption('Topdown view')
+        pygame.font.init()
+        self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
+        self.draw_background(self.topdown_surface)
+        self._screen.fill(white)
         while True:
             if self._kinect.has_new_color_frame():
                 color_frame = self._kinect.get_last_color_frame()
@@ -266,7 +460,6 @@ class TopDownViewRuntime(object):
                 
             if self._kinect.has_new_body_frame(): 
                 self._bodies = self._kinect.get_last_body_frame()
-                # print(self._bodies, "internal")
                 self.new_body_frame = True
 
             if self._kinect.has_new_depth_frame():
@@ -288,37 +481,22 @@ class TopDownViewRuntime(object):
                     self._screen = pygame.display.set_mode(event.dict['size'],pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
                     self._screen.fill(white)
 
+
             if head_locations is not None and len(head_locations)>0: 
                 self.draw_background(self.topdown_surface)
 
             self.draw_heads(head_locations)
 
-            topdown_position = (20,20)
-            
-            self._screen.blit(self.topdown_surface, topdown_position)
-
-            h_to_w = float(self.color_surface.get_height()) / self.color_surface.get_width()
-            target_height = int((h_to_w * self._screen.get_width())*self.color_factor)
-            surface_to_draw = pygame.transform.scale(self.color_surface, (int(self._screen.get_width()*self.color_factor), target_height));
-            color_position = (topdown_position[0] + self.topdown_surface.get_size()[0] + 20, topdown_position[1])
-            self._screen.blit(surface_to_draw, color_position)
-            # print(surface_to_draw)
-            info_position = (color_position[0], color_position[1]+surface_to_draw.get_size()[1]+20)
-            self.info_surface = pygame.transform.scale(self.info_surface, (surface_to_draw.get_size()[0], self.topdown_surface.get_size()[1]-surface_to_draw.get_size()[1]-20))
-            self.info_surface.fill(white)
-            # print("rect", (info_position, self.info_surface.get_size()))
-            pygame.draw.rect(self.info_surface, black, ((0,0), self.info_surface.get_size()), 5)
-            self._screen.blit(self.info_surface, info_position)
-
-            pygame.display.update()
-            pygame.display.flip()
-
-            # print(self.color_surface.get_rect())
-
+            self.draw_foreground()
 
 
 
 
 
 topDownObject = TopDownViewRuntime();
-topDownObject.run()
+# topDownObject.user_interface()
+
+topDownObject.d3d_map()
+
+# position = topDownObject.get_position_from_frame((1,1))
+# print(position)
