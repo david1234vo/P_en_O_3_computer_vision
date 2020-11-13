@@ -1,17 +1,18 @@
 \babel@toc {dutch}{}
 \babel@toc {english}{}
 \babel@toc {dutch}{}
-\contentsline {section}{\numberline {1}Inleiding}{2}%
-\contentsline {section}{\numberline {2}Hoofdtekst}{2}%
-\contentsline {subsection}{\numberline {2.1}Probleemstelling}{2}%
-\contentsline {subsection}{\numberline {2.2}Onderwerpalternatieven}{3}%
-\contentsline {subsubsection}{\numberline {2.2.1}Microsoft Kinect}{3}%
-\contentsline {subsubsection}{\numberline {2.2.2}Stereo imaging}{3}%
-\contentsline {subsubsection}{\numberline {2.2.3}Enkele Camera met AI}{3}%
-\contentsline {subsubsection}{\numberline {2.2.4}Motivatie Keuze}{4}%
-\contentsline {subsection}{\numberline {2.3}Methodologie}{4}%
-\contentsline {subsection}{\numberline {2.4}Resultaten}{4}%
-\contentsline {subsection}{\numberline {2.5}Discussie}{4}%
-\contentsline {subsubsection}{\numberline {2.5.1}Voorstellen Verdere Uitwerking}{4}%
-\contentsline {section}{\numberline {3}Besluit en Verdere Planning}{4}%
-\contentsline {section}{\numberline {4}Vakintegratie}{4}%
+\contentsline {section}{\numberline {1}Inleiding}{2}
+\contentsline {section}{\numberline {2}Hoofdtekst}{2}
+\contentsline {subsection}{\numberline {2.1}Probleemstelling}{2}
+\contentsline {subsection}{\numberline {2.2}Onderwerpalternatieven}{3}
+\contentsline {subsubsection}{\numberline {2.2.1}Microsoft Kinect}{3}
+\contentsline {subsubsection}{\numberline {2.2.2}Stereo imaging}{3}
+\contentsline {subsubsection}{\numberline {2.2.3}Enkele Camera met AI}{3}
+\contentsline {subsubsection}{\numberline {2.2.4}Motivatie Keuze}{4}
+\contentsline {subsection}{\numberline {2.3}Methodologie}{4}
+\contentsline {subsection}{\numberline {2.4}Resultaten}{4}
+\contentsline {subsection}{\numberline {2.5}Discussie}{4}
+\contentsline {subsubsection}{\numberline {2.5.1}Voorstellen Verdere Uitwerking}{4}
+\contentsline {section}{\numberline {3}Verdere Planning}{4}
+\contentsline {section}{\numberline {4}Vakintegratie}{4}
+\contentsline {section}{\numberline {5}Besluit}{5}
