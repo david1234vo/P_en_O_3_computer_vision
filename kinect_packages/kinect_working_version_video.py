@@ -37,49 +37,46 @@ red = (255,0,0)
 class TopDownViewRuntime(object):
     def __init__(self):
 
-        self.folder_name = "kinect_recording_1605009226"
+        #save folder locatie
+        self.folder_name = "kinect_recording_2"
         self.folder_path = "C:/Users/david/Documenten/peno/P_en_O_3_computer_vision/kinect_packages/"+self.folder_name+"/"
 
+        #fps voor het afspelen van de savefile
+        self.fps = 90
+
+        #schaal van topdown en color camera
+        self.topdown_scale = 1/10
+        self.color_scale = 1/4
+
+        #grootte van topdown surface (width, height)
+        self.topdown_surface_size = (1000, 600)
+
+
         self._done = False
-        # self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body | PyKinectV2.FrameSourceTypes_Depth)
-        self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color)
+        self._kinect = PyKinectRuntime.PyKinectRuntime(PyKinectV2.FrameSourceTypes_Color | PyKinectV2.FrameSourceTypes_Body | PyKinectV2.FrameSourceTypes_Depth)
         self._bodies = None
+        self.frame = 0
+        self.begin_time = time.time()
+        self.color_files = [f for f in os.listdir(self.folder_path+"color")]
+        self.depth_files = [f for f in os.listdir(self.folder_path+"depth")]
+        self.heads_files = [f for f in os.listdir(self.folder_path+"heads")]
+        self.last_frame = max([int(element.split("_")[1].split(".")[0]) for element in self.heads_files])
+        self.topdown_position = (20,20)
+        self.new_depth_frame = False
+        self.new_body_frame = False
+
         pygame.init()
         self._clock = pygame.time.Clock()
         self._infoObject = pygame.display.Info()
-        # self._screen = pygame.display.set_mode((self._infoObject.current_w >> 1, self._infoObject.current_h >> 1), 
-        #                                        pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
-        self._screen = pygame.display.set_mode((1430,650), 
-                                               pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
-        self.topdown_surface_size = (1000, 600)
-        # self.topdown_surface = pygame.display.set_mode(self.display_size)
-        self.color_factor = 0.25
-        # self.color_surface = pygame.display.set_mode((int(self.display_size[0]*color_factor), int(self.display_size[1]*color_factor)))
+        self._screen = pygame.display.set_mode((1430,650), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
         self.topdown_surface = pygame.Surface(self.topdown_surface_size, 0, 32)
         self.color_surface = pygame.Surface((1920, 1080), 0, 32)
         self.info_surface = pygame.Surface((400,800), 0,32)
         pygame.display.set_caption('Topdown view')
         pygame.font.init()
         self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
-        self.scale = 1/10
-
         self.draw_background(self.topdown_surface)
-
         self._screen.fill(white)
-
-        self.frame = 0
-        self.begin_time = time.time()
-        
-        self.color_files = [f for f in os.listdir(self.folder_path+"color")]
-        self.depth_files = [f for f in os.listdir(self.folder_path+"depth")]
-        self.heads_files = [f for f in os.listdir(self.folder_path+"heads")]
-        self.last_frame = max([int(element.split("_")[1].split(".")[0]) for element in self.heads_files])
-        self.fps = 90
-
-        self.topdown_position = (20,20)
-
-        self.new_depth_frame = False
-        self.new_body_frame = False
 
     def draw_color_frame(self, frame, target_surface):
         target_surface.lock()
@@ -92,17 +89,14 @@ class TopDownViewRuntime(object):
         return (float(self._kinect.color_frame_desc.Width), float(self._kinect.color_frame_desc.Height))
 
     def convert_to_coordinates(self, locations):
-        # print(locations)
         if len(locations) == 0:
             return
         lis = True
         to_return = []
-        # print(type(locations[0]))
         if type(locations[0]) != list and type(locations[0]) != tuple:
             locations = [locations]
             lis = False
         for location in locations:
-            # print(location)
             window_size = self.get_window_size()
             horizontal_factor = 1/1000
             vertical_factor = -1/1000
@@ -154,7 +148,7 @@ class TopDownViewRuntime(object):
         return [location[0], location[2]]
 
     def coordinate_to_pixel(self, location, extra = 0):
-        return (int(location[0]*self.scale + self.topdown_surface_size[0]/2 + extra), int(location[2]*self.scale + extra))
+        return (int(location[0]*self.topdown_scale + self.topdown_surface_size[0]/2 + extra), int(location[2]*self.topdown_scale + extra))
 
     def get_middle(self, location1, location2):
         x1, y1, z1 = location1
@@ -162,17 +156,9 @@ class TopDownViewRuntime(object):
         return ((x1+x2)/2,(y1+y2)/2,(z1+z2)/2)
 
     def draw_background(self, surface):
-
         surface.fill(black)
-        # (int(self.display_size[0]/2), 0)
-
-        
         width, height = surface.get_size()
         pygame.draw.rect(surface, black, ((0,0), (width, height)), 3)
-        # pygame.draw.line(surface, (255,255, 255), (1,1), (width-1, 1)) 
-        # pygame.draw.line(surface, (255,255, 255), (1,height-1), (width-1, height-1)) 
-        # pygame.draw.line(surface, (255,255, 255), (1,1), (1, height-1)) 
-        # pygame.draw.line(surface, (255,255, 255), (width-1,1), (width-1, height-1)) 
         grid_width = int(width/100)
         grid_height = int(height/100)
         margin = 5
@@ -189,22 +175,17 @@ class TopDownViewRuntime(object):
         pygame.draw.line(surface, black, self.coordinate_to_pixel((0,0,0)), self.coordinate_to_pixel((-21000, 0, 27000)), 10) 
 
     def get_head_location(self):
-        # print(self._bodies, "function")
         if self._bodies is not None: 
-            # print("test1")
             head_locations = []
             for i in range(0, self._kinect.max_body_count):
                 body = self._bodies.bodies[i]
                 if not body.is_tracked: 
                     continue 
-                
-                # print("test2")
                 joints = body.joints 
                 joint_points = self._kinect.body_joints_to_color_space(joints)
                 joint_points_depth = self._kinect.body_joints_to_depth_space(joints)
 
                 if self.new_body_frame and self.new_depth_frame:
-                    # print("test3")
                     try:
                         head_joint = joint_points[PyKinectV2.JointType_Head]
                         head_joint_depth = joint_points_depth[PyKinectV2.JointType_Head]
@@ -217,17 +198,12 @@ class TopDownViewRuntime(object):
 
     def draw_heads(self, head_locations):
         combos = []
-
         # print(head_locations)
-
         head_coordinates = self.convert_to_coordinates(head_locations)
-
         text_surfaces_to_draw = []
-
         too_close = 0
         for head in head_locations:
             coordinate = self.convert_to_coordinates(head)
-            
             # print(head_coordinates, self.get_distances(coordinate, head_coordinates))
             try:
                 nearest = min(self.get_distances(coordinate, head_coordinates))
@@ -240,9 +216,7 @@ class TopDownViewRuntime(object):
             else:
                 circle_color = (255, 0, 0)
                 too_close += 1
-            radius = int(750*self.scale)
-
-            
+            radius = int(750*self.topdown_scale)
 
             for second_head in head_locations:
                 if second_head != head:
@@ -274,15 +248,13 @@ class TopDownViewRuntime(object):
         self._screen.blit(self.topdown_surface, self.topdown_position)
 
         h_to_w = float(self.color_surface.get_height()) / self.color_surface.get_width()
-        target_height = int((h_to_w * self._screen.get_width())*self.color_factor)
-        surface_to_draw = pygame.transform.scale(self.color_surface, (int(self._screen.get_width()*self.color_factor), target_height));
+        target_height = int((h_to_w * self._screen.get_width())*self.color_scale)
+        surface_to_draw = pygame.transform.scale(self.color_surface, (int(self._screen.get_width()*self.color_scale), target_height));
         color_position = (self.topdown_position[0] + self.topdown_surface.get_size()[0] + 20, self.topdown_position[1])
         self._screen.blit(surface_to_draw, color_position)
-        # print(surface_to_draw)
         info_position = (color_position[0], color_position[1]+surface_to_draw.get_size()[1]+20)
         self.info_surface = pygame.transform.scale(self.info_surface, (surface_to_draw.get_size()[0], self.topdown_surface.get_size()[1]-surface_to_draw.get_size()[1]-20))
         self.info_surface.fill(white)
-        # print("rect", (info_position, self.info_surface.get_size()))
         pygame.draw.rect(self.info_surface, black, ((0,0), self.info_surface.get_size()), 5)
         self._screen.blit(self.info_surface, info_position)
 
@@ -290,9 +262,6 @@ class TopDownViewRuntime(object):
         pygame.display.flip()
 
     def run(self):
-
-        
-
         while True:
             frame_name = "frame_"+str(self.frame)+".npy"
 
@@ -327,10 +296,6 @@ class TopDownViewRuntime(object):
             self.frame = int((time.time()-self.begin_time)*self.fps)
             if self.frame > self.last_frame:
                 break
-
-
-
-
 
 
 topDownObject = TopDownViewRuntime();
