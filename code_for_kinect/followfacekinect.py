@@ -3,12 +3,19 @@ import numpy as np
 import cv2
 import random
 
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier(
+    'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
-mouth_cascade = cv2.CascadeClassifier('haarcascade_mcs_mouth.xml')
+mouth_cascade = cv2.CascadeClassifier(
+    'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_mcs_mouth.xml')
 upper_body = cv2.CascadeClassifier('haarcascade_upperbody.xml')
 
 bw_threshold = 80
+
+def get_corners(rect):
+    (x, y, w, h) = rect
+    corners = np.array([x, y, x + w, y + h])
+    return corners
 
 
 def crop_image(original, face):
@@ -19,19 +26,11 @@ def crop_image(original, face):
     res = original_shape[0] / original_shape[1]
 
     if range == [0, 0, x_original, y_original]:
-        crop = img[0:x_original, edge:y_original - edge]
+        crop = original[0:x_original, edge:y_original - edge]
     else:
-        pos_y = int(face[0])
-        pos_x = int(face[1])
+        (y_min, x_min, y_max, x_max) = get_corners(face)
 
-        width = int(face[2])
-        height = int(face[3])
-        y_min = pos_y
-        y_max = pos_y + width
-        x_min = pos_x
-        x_max = pos_x + height
-
-        crop = img[x_min:x_max, y_min:y_max]
+        crop = original[x_min:x_max, y_min:y_max]
 
     scale_percent = 100  # percent of original size
     width_resize = int(x_original * scale_percent / 100)
