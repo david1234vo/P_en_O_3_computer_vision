@@ -2,7 +2,7 @@ from pykinect2_8 import PyKinectV2
 from pykinect2_8.PyKinectV2 import *
 from pykinect2_8 import PyKinectRuntime
 import numpy as np
-
+from code_for_kinect.followfacekinect import *
 import ctypes
 import _ctypes
 import pygame
@@ -39,7 +39,7 @@ class TopDownViewRuntime(object):
 
         #save folder locatie
         self.folder_name = "kinect_recording_2"
-        self.folder_path = "C:/Users/david/Documenten/peno/P_en_O_3_computer_vision/kinect_packages/"+self.folder_name+"/"
+        self.folder_path = "C:/Users/lucas/Downloads/Kinect_videos/"+self.folder_name+"/"
 
         #fps voor het afspelen van de savefile
         self.fps = 90
@@ -83,7 +83,6 @@ class TopDownViewRuntime(object):
         address = self._kinect.surface_as_array(target_surface.get_buffer())
         ctypes.memmove(address, frame.ctypes.data, frame.size)
         del address
-        target_surface.unlock()
 
     def get_window_size(self):
         return (float(self._kinect.color_frame_desc.Width), float(self._kinect.color_frame_desc.Height))
@@ -268,7 +267,14 @@ class TopDownViewRuntime(object):
             if frame_name in self.color_files:
                 self.color_frame = np.load(self.folder_path+"color/"+frame_name)
                 self.draw_color_frame(self.color_frame, self.color_surface)
-                pygame.draw.rect(self.color_surface, black, ((0,0), self.color_surface.get_size()), 80)
+                view = pygame.surfarray.array3d(self.color_surface)
+                view = view.transpose([1, 0, 2])
+                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2GRAY)
+                face_positions = position_faces(img_bgr)
+                for (x_face, y_face, width_face, height_face) in face_positions:
+                    pygame.draw.rect(self.color_surface, red, ((x_face, y_face), (width_face, height_face)), 10)
+                pygame.draw.rect(self.color_surface, black, ((0, 0), self.color_surface.get_size()), 80)
+
 
             if frame_name in self.depth_files:
                 self.depth_frame = np.load(self.folder_path+"depth/"+frame_name)
@@ -292,8 +298,8 @@ class TopDownViewRuntime(object):
             self.draw_heads(head_locations)
 
             self.draw_foreground()
-            
             self.frame = int((time.time()-self.begin_time)*self.fps)
+            print(self.frame-self.last_frame)
             if self.frame > self.last_frame:
                 break
 
