@@ -4,7 +4,7 @@ import cv2
 import random
 
 face_cascade = cv2.CascadeClassifier('C:/Users/lucas/PycharmProjects/P_en_O_3_computer_vision/Cascades/haarcascade_frontalface_default.xml')
-face_cascade = cv2.CascadeClassifier(    'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_frontalface_default.xml')
+#face_cascade = cv2.CascadeClassifier(    'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 mouth_cascade = cv2.CascadeClassifier(
     'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_mcs_mouth.xml')

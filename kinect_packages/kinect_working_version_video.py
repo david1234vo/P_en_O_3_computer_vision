@@ -299,7 +299,6 @@ class TopDownViewRuntime(object):
 
             self.draw_foreground()
             self.frame = int((time.time()-self.begin_time)*self.fps)
-            print(self.frame-self.last_frame)
             if self.frame > self.last_frame:
                 break
 
