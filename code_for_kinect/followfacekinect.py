@@ -33,7 +33,7 @@ def crop_image(original, face):
         crop = original[x_min:x_max, y_min:y_max]
 
     scale_percent = 100  # percent of original size
-    width_resize = int(x_original * scale_percent / 100)
+    width_resize = int(y_original * scale_percent / 100)
     height_resize = int(x_original * scale_percent / 100)
     dim = (width_resize, height_resize)
     resized = cv2.resize(crop, dim, interpolation=cv2.INTER_AREA)

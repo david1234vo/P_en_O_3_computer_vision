@@ -37,7 +37,9 @@ def mouth_within_face(mouth, face):
     if xmin >= xMin:
         if xmax <= xMax:
             if ymin >= yMin:
-                if ymin < yMax - 10:
+                y_scale = 0.3
+                h = ymax - ymin
+                if ymax < yMax + y_scale * h:
                     return True
     return False
 
@@ -156,9 +158,13 @@ def overlap(rect1, rect2):
         return 0
 
 
-def area(rect):
-    dx = rect[2] - rect[0]
-    dy = rect[3] - rect[1]
+def area(rect, type_rect):
+    if type_rect == 0:
+        dx = rect[2] - rect[0]
+        dy = rect[3] - rect[1]
+    if type_rect == 1:
+        dx = rect[2]
+        dy = rect[3]
     return dx * dy
 
 
@@ -197,18 +203,39 @@ def middle_position(rect):
     return (int(x + w / 2), int(y + h / 2))
 
 
-def best_mouth_to_face(mouths, noses, faces):
+def best_mouth_to_face(mouths, faces):
+    faces_mouths_noses = []
     best_mouths = []
     good_mouths = all_mouths_within_face(mouths, faces)
     for face in faces:
+        best_mouths_in_face = []
         for mouth in good_mouths:
             (xf, yf, wf, hf) = face
             (xm, ym, wm, hm) = mouth
             if middle_position(face)[1] < ym < yf + hf:
                 rel_dist = relative_distance_to_midpoint(mouth, face, 0)
                 if rel_dist < 0.1:
-                    best_mouths.append(mouth)
-    return best_mouths
+                    best_mouths_in_face.append(mouth)
+
+        if len(best_mouths_in_face) > 1:
+            areas = []
+            for best_mouth in best_mouths_in_face:
+                ar = area(best_mouth, 1)
+                areas.append(ar)
+            max_ar = max(areas)
+            pos = areas.index(max_ar)
+            ultimate_mouth = best_mouths_in_face[pos]
+        elif len(best_mouths_in_face) == 1:
+            ultimate_mouth = best_mouths_in_face[0]
+        else:
+            ultimate_mouth = None
+        if ultimate_mouth is not None:
+            best_mouths.append(ultimate_mouth)
+        mouth_in_face = [face, ultimate_mouth, None]
+
+        faces_mouths_noses.append(mouth_in_face)
+
+    return best_mouths, faces_mouths_noses
 
 
 def relative_distance_to_midpoint(rect, face, axis):
@@ -228,16 +255,32 @@ def relative_distance_to_midpoint(rect, face, axis):
         return rel_dist
 
 
-def best_nose_to_face(noses, faces):
+def best_nose_to_face(noses, faces, faces_mouths_noses):
     best_noses = []
     good_noses = all_rectangles_within_face(noses, faces)
     for face in faces:
+        best_noses_in_face = []
         for nose in good_noses:
             rel_distx = relative_distance_to_midpoint(nose, face, 0)
             if rel_distx < 0.2:
                 rel_disty = relative_distance_to_midpoint(nose, face, 1)
                 if rel_disty < 0.2:
-                    best_noses.append(nose)
+                    best_noses_in_face.append(nose)
+
+        if len(best_noses_in_face) > 1:
+            ultimate_nose = best_noses_in_face[0]
+        elif len(best_noses_in_face) == 1:
+            ultimate_nose = best_noses_in_face[0]
+        else:
+            ultimate_nose = None
+
+        for face_mouth_nose in faces_mouths_noses:
+            if face_mouth_nose[0].all() == face.all():
+                face_mouth_nose[2] = ultimate_nose
+
+        if ultimate_nose is not None:
+            best_noses.append(ultimate_nose)
+
     return best_noses
 
 
@@ -286,12 +329,11 @@ def mask_due_color(img, faces=None):
 
     for pos in positions:
         diff_mouth, diff_nose = mouth_to_forehead_difference(img, pos)
-        print('')
         if diff_nose < 75:
             if diff_mouth < 75:
-                display_wear_a_mask(img, pos)
+                display_wear_a_mask(img, pos, 0)
             else:
-                display_wear_properly(img, pos)
+                display_wear_properly(img, pos, 0)
 
     pass
 
@@ -324,17 +366,43 @@ def mouth_to_forehead_difference(img, pos):
     return diff_mouth, diff_nose
 
 
-def display_wear_a_mask(img, pos):
+def display_wear_a_mask(img, pos, type_rect):
+    if type_rect == 0:
+        length_face = pos[2] - pos[0]
+    if type_rect == 1:
+        length_face = pos[2]
     length_text = cv2.getTextSize('Please wear a mask!', cv2.FONT_HERSHEY_SIMPLEX, 1, 1)[0][0]
-    length_face = pos[2] - pos[0]
     scale = length_face / length_text
     cv2.putText(img, 'Please wear a mask!', (pos[0], pos[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255))
 
 
-def display_wear_properly(img, pos):
+def display_wear_properly(img, pos, type_rect):
+    if type_rect == 0:
+        length_face = pos[2] - pos[0]
+    if type_rect == 1:
+        length_face = pos[2]
     length_text1 = cv2.getTextSize('Please wear your mask', cv2.FONT_HERSHEY_SIMPLEX, 1, 1)[0][0]
     length_text2 = cv2.getTextSize('over your nose!', cv2.FONT_HERSHEY_SIMPLEX, 1, 1)[0][0]
-    length_face = pos[2] - pos[0]
     scale = length_face / length_text1
     cv2.putText(img, 'Please wear your mask', (pos[0], pos[1] - 22), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255))
     cv2.putText(img, 'over your nose!', (pos[0], pos[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255))
+
+
+def resize_image(img, scale_percent):
+    original_shape = img.shape
+    x_original = original_shape[0]
+    y_original = original_shape[1]
+    width_resize = int(y_original * scale_percent / 100)
+    height_resize = int(x_original * scale_percent / 100)
+    dim = (width_resize, height_resize)
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+    return resized
+
+
+def mask_due_haar(img, faces_mouths_noses):
+    for face_mouth_nose in faces_mouths_noses:
+        if face_mouth_nose[1] is not None:
+            display_wear_a_mask(img, face_mouth_nose[0], 1)
+        else:
+            if face_mouth_nose[2] is not None:
+                display_wear_properly(img, face_mouth_nose[0], 1)
