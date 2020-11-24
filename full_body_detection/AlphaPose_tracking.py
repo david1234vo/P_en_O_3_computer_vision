@@ -8,7 +8,6 @@ from matplotlib import pyplot as plt
 
 
 
-
 #### live feed ####
 # def overlapping_area(box1, box2):
 #     dx = min(box1[2], box2[2]) - max(box1[0], box2[0])
