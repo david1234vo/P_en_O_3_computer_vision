@@ -347,6 +347,21 @@ class TopDownViewRuntime(object):
                 self.debug_time["new_mapping"] += time.time() - map_time
 
 
+                # map_time = time.time()
+                # for y in range(0,424, step):
+                #     for x in range(0,512, step):
+                #         depth_coordinate = [x, y, depth_frame[y, x]]
+                #         position = self.convert_to_coordinate(depth_coordinate, (512,424))
+                #         if position != [0,0,0]:
+                #             xyz.append([position[0], position[1], position[2]/4])
+                #             if self.show_color_pixel:
+                #                 try:
+                #                     color_list.append(self.color_surface.get_at((int(((x-256)/0.3673)+960), int(((y-212)/0.3673)+540))))
+                #                 except Exception:
+                #                     color_list.append((255,0,0,255))
+                # self.debug_time["mapping"] += time.time()-map_time
+
+
                 self.nodes = np.array(xyz)
                 self.nodes = np.hstack((self.nodes, np.ones((len(self.nodes), 1))))
 
@@ -393,8 +408,14 @@ class TopDownViewRuntime(object):
                 for transform in transformation_matrices:
                     self.nodes = np.dot(self.nodes, transform)
 
-                self.debug_time["transforming"] += time.time() - transform_time
 
+                self.nodes[:, 1] = -self.nodes[:, 1]
+                # self.nodes = self.nodes.astype(int)
+                # print("len nodes:", len(self.nodes))
+                # self.nodes = np.unique(self.nodes, axis = 0)
+                # print("len nodes:", len(self.nodes))
+
+                self.debug_time["transforming"] += time.time() - transform_time
 
                 display_time = time.time()
 
@@ -403,7 +424,23 @@ class TopDownViewRuntime(object):
 
                 for index, node in enumerate(self.nodes):
                     if self.show_color_pixel: color_to_draw = color_list[index]
-                    pygame.draw.circle(self.node_surface, color_to_draw, (int(node[0]), -int(node[1])), 2, 0)
+                    pygame.draw.circle(self.node_surface, color_to_draw, (int(node[0]), int(node[1])), 2, 0)
+
+                # self.nodes[:, 0] += abs(max(min(self.nodes[:, 0]), 0))
+                # self.nodes[:, 1] += abs(max(min(self.nodes[:, 1]), 0))
+                # dim = int(max(max(self.nodes[:, 0]), max(self.nodes[:, 1])))+1
+                # np_nodes = np.zeros((dim,dim,3))
+                # for node in self.nodes:
+                #     np_nodes[int(node[0]), int(node[1])] = np.array(white)
+                #
+                # self.node_surface = pygame.surfarray.make_surface(np_nodes)
+
+
+                # ax.scatter(self.nodes[:, 0], self.nodes[:, 1])
+                # plt.pause(0.01)
+
+
+
 
                 self.debug_time["displaying"] += time.time()-display_time
 
