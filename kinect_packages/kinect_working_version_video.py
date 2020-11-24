@@ -3,6 +3,7 @@ from pykinect2_8.PyKinectV2 import *
 from pykinect2_8 import PyKinectRuntime
 import numpy as np
 from code_for_kinect.followfacekinect import *
+from code_for_kinect.eigenmaskdetectionkinect.maskdetectioncolor import *
 import ctypes
 import _ctypes
 import pygame
@@ -10,6 +11,7 @@ import sys
 import math
 import os
 import time
+import cv2
 
 import pygame, sys
 from pygame.locals import *
@@ -32,21 +34,23 @@ white = (255,255,255)
 black = (0,0,0)
 gray = (200,200,200)
 red = (255,0,0)
-
-
+orange=(255,165,0)
+green=(0,255,0)
+mask_strings = ("thanks for wearing MASK", "wear MASK properly", "please wear MASK")
+face_rectangle_colors=(green,orange,red)
 class TopDownViewRuntime(object):
     def __init__(self):
 
         #save folder locatie
-        self.folder_name = "kinect_recording_2"
-        self.folder_path = "C:/Users/lucas/Downloads/Kinect_videos/"+self.folder_name+"/"
+        self.folder_name = "kinect_recording_mondmasker_klein"
+        self.folder_path = "C:/Users/lucas/Downloads/"+self.folder_name+"/"
 
         #fps voor het afspelen van de savefile
         self.fps = 90
 
         #schaal van topdown en color camera
         self.topdown_scale = 1/10
-        self.color_scale = 1/4
+        self.color_scale = 3/8
 
         #grootte van topdown surface (width, height)
         self.topdown_surface_size = (1000, 600)
@@ -68,18 +72,19 @@ class TopDownViewRuntime(object):
         pygame.init()
         self._clock = pygame.time.Clock()
         self._infoObject = pygame.display.Info()
-        self._screen = pygame.display.set_mode((1430,650), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        self._screen = pygame.display.set_mode((1920,650), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
         self.topdown_surface = pygame.Surface(self.topdown_surface_size, 0, 32)
         self.color_surface = pygame.Surface((1920, 1080), 0, 32)
         self.info_surface = pygame.Surface((400,800), 0,32)
         pygame.display.set_caption('Topdown view')
         pygame.font.init()
         self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
+        self.mask_strings = ("thanks for wearing MASK", "wear MASK properly", "please wear MASK")
         self.draw_background(self.topdown_surface)
         self._screen.fill(white)
 
     def draw_color_frame(self, frame, target_surface):
-        target_surface.lock()
+        # target_surface.lock()
         address = self._kinect.surface_as_array(target_surface.get_buffer())
         ctypes.memmove(address, frame.ctypes.data, frame.size)
         del address
@@ -262,18 +267,26 @@ class TopDownViewRuntime(object):
 
     def run(self):
         while True:
+            timer = cv2.getTickCount()
             frame_name = "frame_"+str(self.frame)+".npy"
-
             if frame_name in self.color_files:
                 self.color_frame = np.load(self.folder_path+"color/"+frame_name)
                 self.draw_color_frame(self.color_frame, self.color_surface)
                 view = pygame.surfarray.array3d(self.color_surface)
                 view = view.transpose([1, 0, 2])
-                img_bgr = cv2.cvtColor(view, cv2.COLOR_RGB2GRAY)
-                face_positions = position_faces(img_bgr)
-                for (x_face, y_face, width_face, height_face) in face_positions:
-                    pygame.draw.rect(self.color_surface, red, ((x_face, y_face), (width_face, height_face)), 10)
+                img_BGR = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
+                face_positions = maskdetectioncolor(img_BGR, 50)
+
+                for (x_face, y_face, width_face, height_face, mask_code) in face_positions:
+                    pygame.draw.rect(self.color_surface, face_rectangle_colors[mask_code], ((x_face, y_face), (width_face, height_face)), 10)
+                    textsurface = self.myfont.render(mask_strings[mask_code], False, (0, 0, 255))
+                    text_coordinate = (x_face, y_face+height_face+10)
+                    self.color_surface.blit(textsurface, text_coordinate)
                 pygame.draw.rect(self.color_surface, black, ((0, 0), self.color_surface.get_size()), 80)
+                fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
+                fps_text = self.myfont.render(str(fps), False, black)
+                text_coordinate = (50, 50)
+                self.color_surface.blit(fps_text, text_coordinate)
 
 
             if frame_name in self.depth_files:
@@ -296,6 +309,7 @@ class TopDownViewRuntime(object):
                 self.draw_background(self.topdown_surface)
 
             self.draw_heads(head_locations)
+
 
             self.draw_foreground()
             self.frame = int((time.time()-self.begin_time)*self.fps)
