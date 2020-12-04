@@ -5,11 +5,11 @@ import imutils
 import cv2
 
 face_cascade = cv2.CascadeClassifier(
-    'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_frontalface_default.xml')
+    'C:/Users/lucas/PycharmProjects/P_en_O_3_computer_vision/Cascades/haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier(
-    'C:/Users/Jasper/PycharmProjects/PO3/P_en_O_3_computer_vision/Cascades/haarcascade_mcs_eyepair_big.xml')
+    'C:/Users/lucas/PycharmProjects/P_en_O_3_computer_vision/Cascades/haarcascade_mcs_eyepair_big.xml')
 
-cap = cv2.VideoCapture('color_2_without_skelet.mp4')
+
 
 
 #cap = cv2.VideoCapture(0)
@@ -18,9 +18,9 @@ cap = cv2.VideoCapture('color_2_without_skelet.mp4')
 def detect_persons(img):
     hog = cv2.HOGDescriptor()
     hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
-    (rects, weights) = hog.detectMultiScale(img, winStride=(4, 4),
+    rects, _ = hog.detectMultiScale(img, winStride=(4, 4),
                                             padding=(8, 8), scale=1.05)
-    rects = np.array([[4.8 * x, 4.8 * y, 4.8 * (x + w), 4.8 * (y + h)] for (x, y, w, h) in rects])
+    rects = np.array([[4.8 * x, 4.8 * y, 4.8 * (w), 4.8 * (h)] for (x, y, w, h) in rects])
     pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
     return pick
 
@@ -40,19 +40,14 @@ def get_corners(rect):
     return corners
 
 
-def crop_image(original, face):
+def crop_image(original, rect):
     original_shape = original.shape
     x_original = original_shape[0]
     y_original = original_shape[1]
     edge = int((y_original - x_original) / 2)
     res = original_shape[0] / original_shape[1]
-
-    if range == [0, 0, x_original, y_original]:
-        crop = original[0:x_original, edge:y_original - edge]
-    else:
-        (y_min, x_min, y_max, x_max) = face
-
-        crop = original[x_min:x_max, y_min:y_max]
+    (y, x, h, w) = rect
+    crop = original[x:x+w, y:y+h] # w//2 voor hogere fps, maar iets minder gezichten herkennen
     img = crop.copy()
     return img
 
@@ -123,30 +118,22 @@ def resize_image(img, scale_percent):
     return resized
 
 
-while True:
+def detect_persons_with_faces(image):
     all_persons=[]
     faceso = []
-    timer = cv2.getTickCount()
-    _, image = cap.read()
-    orig = image.copy()
-    image = imutils.resize(image, width=min(400, image.shape[1]))
-    persons = detect_persons(image)
+    persons = detect_persons(imutils.resize(image, width=min(400, image.shape[1])))
     for person in persons:
-        crop = crop_image(orig, person)
-        crop=resize_image(crop,50)
+        crop = crop_image(image, person)
+        #print(crop)
+        crop = resize_image(crop,100)
+        #print(crop)
         faces, eyes = true_eyes_and_faces(crop)
-        print(faces)
         if faces != []:
             all_persons.append(person)
         for face in faces:
-            faceso.append((2*face[0]+person[0],2*face[1]+person[1],2*face[2],2*face[3]))
-    add_rectangle(orig, all_persons,0)
-    add_rectangle(orig, faceso, 1)
-    fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
-    cv2.putText(orig, str(fps), (25, 25), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0))
-    cv2.imshow("After NMS", orig)
-    k = cv2.waitKey(1) & 0xff
-    if k == 27:
-        break
+            faceso.append((face[0]+person[0],face[1]+person[1],face[2],face[3]))
+    return all_persons, faceso
 
-cap.release()
+def detect_persons_with_rescale(image):
+    return detect_persons(imutils.resize(image, width=min(400, image.shape[1])))
+
