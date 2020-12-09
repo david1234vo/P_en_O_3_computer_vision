@@ -327,15 +327,15 @@ def mask_due_color(img, faces=None,resizefactor=100):
         side_pos = get_corners(face)
         middle_pos = middle_position(face)
         diff_mouth, diff_nose = mouth_to_forehead_difference(img, (side_pos + middle_pos))
-        if diff_nose < 75:
-            if diff_mouth < 75:
-                # display_wear_a_mask(img, pos, 0)
-                mask_info.append((x,y,w,h,2))
-            else:
+        if diff_mouth < 75:
+            # display_wear_a_mask(img, pos, 0)
+            mask_info.append((x, y, w, h, 2))
+        else:
+            if diff_nose < 75:
                 # display_wear_properly(img, pos, 0)
                 mask_info.append((x,y,w,h,1))
-        else:
-            mask_info.append((x,y,w,h,0))
+            else:
+                mask_info.append((x,y,w,h,0))
     # print(mask_info)
     return mask_info
 
