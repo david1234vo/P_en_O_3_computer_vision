@@ -30,14 +30,12 @@ from tensorflow.keras.models import load_model
 
 
 
-
-
 class TopDownViewRuntime(object):
 
     def init(self):
         #schaal van topdown en color camera
         self.topdown_scale = 1/10
-        self.color_scale = 1/4
+        self.color_scale = 4/8
 
         #grootte van topdown surface (width, height)
         self.topdown_surface_size = (1000, 600)
@@ -106,8 +104,8 @@ class TopDownViewRuntime(object):
         for location in locations:
             if window_size is None:
                 window_size = self.get_window_size()
-            horizontal_factor = 1/1000
-            vertical_factor = -1/1000
+            horizontal_factor = 1/1000 * 0.9
+            vertical_factor = -1/1000 * 0.9
             x, y, depth, _ = location
             width, height = window_size
             horizontal_coordinate = (x-width/2)*depth*horizontal_factor
@@ -118,11 +116,17 @@ class TopDownViewRuntime(object):
         else:
             return to_return
 
+    def color_difference(self, color1, color2):  # BGR
+        (b1, g1, r1) = color1
+        (b2, g2, r2) = color2
+        diff = abs(math.sqrt(2 * (b2 - b1) ** 2 + (g2 - g1) ** 2 + (r2 - r1) ** 2))
+        return diff
+
     def convert_to_coordinate(self, location, window_size = None):
         if window_size is None:
             window_size = self.get_window_size()
-        horizontal_factor = 1/1000
-        vertical_factor = -1/1000
+        horizontal_factor = 1/1000 * 0.9
+        vertical_factor = -1/1000 * 0.9
         x, y, depth = location
         width, height = window_size
         horizontal_coordinate = (x-width/2)*depth*horizontal_factor
@@ -177,6 +181,11 @@ class TopDownViewRuntime(object):
                         if "infinity" not in str(e):
                             print("error before return:", e)
 
+    def between_zero_and(self,number, max_number):
+        a = int(min(max(number, 0), max_number))
+        # print("between", a, number, max_number)
+        return a
+
     def get_hands_location(self):
         """
             returns a list containing tuples which all contain two tuples, respectively storing
@@ -185,38 +194,127 @@ class TopDownViewRuntime(object):
 
         hands_locations = []
         if self._bodies is not None:
-            for body in self._bodies:
-                joints = body.joints
-                lx = joints[PyKinectV2.JointType_HandLeft].Position.x
-                ly = joints[PyKinectV2.JointType_HandLeft].Position.y
-                lz = joints[PyKinectV2.JointType_HandLeft].Position.z
+            for i in range(0, self._kinect.max_body_count):
+                body = self._bodies.bodies[i]
+                if body.is_tracked:
+                    joints = body.joints
+                    joint_points = self._kinect.body_joints_to_color_space(joints)
+                    joint_points_depth = self._kinect.body_joints_to_depth_space(joints)
 
-                rx = joints[PyKinectV2.JointType_HandRight].Position.x
-                ry = joints[PyKinectV2.JointType_HandRight].Position.y
-                rz = joints[PyKinectV2.JointType_HandRight].Position.z
+                    hand_joint = joint_points[PyKinectV2.JointType_HandLeft]
+                    hand_joint_depth = joint_points_depth[PyKinectV2.JointType_HandLeft]
+                    if self.between_zero_and(hand_joint_depth.y, 423) == int(hand_joint_depth.y) and self.between_zero_and(hand_joint_depth.x, 511) == int(hand_joint_depth.x):
+                        lx = hand_joint.x
+                        ly = hand_joint.y
+                        lz = int(self.depth_frame[int(hand_joint_depth.y), int(hand_joint_depth.x)])
+                    else:
+                        lx, ly, lz = 0,0,0
+                        # print("left", hand_joint_depth.x, hand_joint_depth.y)
 
-                hands_locations.append(((lx, ly, lz), (rx, ry, rz)))
+                    hand_joint = joint_points[PyKinectV2.JointType_HandRight]
+                    hand_joint_depth = joint_points_depth[PyKinectV2.JointType_HandRight]
+                    if self.between_zero_and(hand_joint_depth.y, 423) == int(hand_joint_depth.y) and self.between_zero_and(
+                            hand_joint_depth.x, 511) == int(hand_joint_depth.x):
+                        rx = hand_joint.x
+                        ry = hand_joint.y
+                        rz = int(self.depth_frame[int(hand_joint_depth.y), int(hand_joint_depth.x)])
+                    else:
+                        rx, ry, rz = 0, 0, 0
+                        # print("right", hand_joint_depth.x, hand_joint_depth.y)
+
+                    hands_locations.append(((i, lx, ly, lz), (i, rx, ry, rz)))
 
         return hands_locations
 
-    def hands_to_close(self, distance_allowed):
+    def hands_too_close(self, distance_allowed):
         """
             prints whether or not the hands of any two people are to close
         """
-        while True:
-            hand_locations = self.get_hands_location()
-            if len(hand_locations) > 1:
-                for i in range(len(hand_locations) - 1):
-                    for k in range(0, 2):
-                        x1, y1, z1 = self.convert_to_coordinate(hand_locations[i][k])
+        hand_locations_without_depth = self.get_hands_location()
 
-                        for j in range(len(hand_locations[i + 1:])):
-                            for q in range(0, 2):
-                                x2, y2, z2 = self.convert_to_coordinate(hand_locations[j][q])
+        hand_locations = [[[element[0][0]]+self.convert_to_coordinate(element[0][1:]), [element[1][0]]+self.convert_to_coordinate(element[1][1:])] for element
+                          in hand_locations_without_depth]
 
+        hand_locations = [[[int(s) for s in element[0]], [int(s) for s in element[1]]] for element
+                          in hand_locations]
+
+        # if hand_locations != []:
+        #     hand_locations.append([[100, -1143, 33, 1724], [100, -350, 22, 1753]])
+        # else:
+        #     hand_locations = [[[100, -1143, 33, 1724], [100, -350, 22, 1753]]]
+
+        # print(hand_locations, hand_locations_without_depth)
+
+        # cv2.imshow("hands", self.color_frame)
+
+        # print(hand_locations)
+        #
+        # for left, right in hand_locations:
+        #     d = int(self.color_difference(left, right))
+        #     print("distance between", left, "and", right, "is", d)
+            # for left2, right2 in hand_locations.copy():
+            #     # print(left, right, left2, right2)
+            #     if (left != left2 or not (left == left2 and [int(s) for s in left] == [0, 0, 0])) and (
+            #             right != right2 or not (right == right2 and [int(s) for s in right] == [0, 0, 0])):
+            #         distances = [int(self.color_difference(left, left2)), int(self.color_difference(right, right2)),
+            #                      int(self.color_difference(left, right2)), int(self.color_difference(right, left2))]
+            #         if left == (0, 0, 0):
+            #             distances[0] = 0
+            #             distances[2] = 0
+            #         if right == (0, 0, 0):
+            #             distances[1] = 0
+            #             distances[3] = 0
+            #         if left2 == (0, 0, 0):
+            #             distances[0] = 0
+            #             distances[3] = 0
+            #         if right2 == (0, 0, 0):
+            #             distances[1] = 0
+            #             distances[2] = 0
+            #         # print("distance", left, right, left2, right2, distances)
+            #         m = min(distances)
+            #         # if 0 < m < 1500:
+            #         print(m)
+
+        # print("hand_locations:", hand_locations)
+        if len(hand_locations) > 1:
+            for i in range(len(hand_locations)-1):
+                for k in range(0, 2):
+                    id1, x1, y1, z1 = hand_locations[i][k]
+
+                    for j in range(len(hand_locations[i:])):
+                        for q in range(0, 2):
+                            id2, x2, y2, z2 = hand_locations[j][q]
+
+
+                            if id1 != id2:
                                 current_distance = np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2 + (z1 - z2) ** 2)
-                                if current_distance < distance_allowed:
-                                    print("too close: hands at", hand_locations[i][k], "and", hand_locations[j][q])
+                                # if current_distance > 0: print("distance between", x1, y1, z1,"/", x2, y2, z2, "is", current_distance)
+                                if 0 < current_distance < distance_allowed:
+                                    print(current_distance, "too close: hands at", [int(x) for x in hand_locations[i][k]], "and", [int(x) for x in hand_locations[j][q]])
+                                    font = pygame.font.SysFont('Comic Sans MS', 80)
+                                    textsurface = font.render("hands at distance "+str(round(current_distance, 2)), False, (0, 0, 255))
+                                    text_coordinate = (50,50)
+                                    self.color_surface.blit(textsurface, text_coordinate)
+
+        # for left, right in hand_locations:
+        #     for left2, right2 in hand_locations.copy():
+        #         if (left != left2) and (right != right2):
+        #             distances = [int(self.color_difference(left, left2)), int(self.color_difference(right, right2)), int(self.color_difference(left, right2)), int(self.color_difference(right, left2))]
+        #             if left == (0,0,0):
+        #                 distances[0] = 0
+        #                 distances[2] = 0
+        #             if right == (0,0,0):
+        #                 distances[1] = 0
+        #                 distances[3] = 0
+        #             if left2 == (0,0,0):
+        #                 distances[0] = 0
+        #                 distances[3] = 0
+        #             if right2 == (0,0,0):
+        #                 distances[1] = 0
+        #                 distances[2] = 0
+        #             print("distance2", left, right, distances)
+
+
 
 
     def nearest_nonzero_idx(self, a, x, y):
@@ -233,12 +331,16 @@ class TopDownViewRuntime(object):
                 chest_location = [x + w // 2, y + h // 3]
                 xd = int((chest_location[0] - 960) * 0.3673 + 256)
                 yd = int((chest_location[1] - 540) * 0.3673 + 212)
-                if 0 <= xd < self.depth_frame.shape[0] and 0 <= yd < self.depth_frame.shape[1]:
+                self.chest_depth = 0
+                if 0 <= yd < self.depth_frame.shape[0] and 0 <= xd < self.depth_frame.shape[1]:
                     depth_y, depth_x = self.nearest_nonzero_idx(self.depth_frame, yd, xd)
                     depth = self.depth_frame[depth_y, depth_x]
                     self.chest_depth = depth
-                chest_location.append(self.chest_depth)
-                chest_locations.append(chest_location)
+                else:
+                    print("not in frame", xd, yd)
+                if self.chest_depth != 0:
+                    chest_location.append(self.chest_depth)
+                    chest_locations.append(chest_location)
             return chest_locations
 
     def get_position_from_frame(self, frame_coordinate):
@@ -254,11 +356,7 @@ class TopDownViewRuntime(object):
         vecs, dist = scipy.cluster.vq.vq(ar, codes)
         return np.reshape(vecs, shape[:2]), codes, vecs
 
-    def color_difference(self, color1, color2):  # BGR
-        (b1, g1, r1) = color1
-        (b2, g2, r2) = color2
-        diff = abs(math.sqrt(2 * (b2 - b1) ** 2 + (g2 - g1) ** 2 + (r2 - r1) ** 2))
-        return diff
+
 
     def retrieve_data(self, draw = True, print_output = False):
 
@@ -277,8 +375,9 @@ class TopDownViewRuntime(object):
                 view = view.transpose([1, 0, 2])
                 img_BGR = cv2.cvtColor(view, cv2.COLOR_RGB2BGR)
                 self.person_positions = detect_persons_with_rescale(img_BGR)
-                for (x_person, y_person, width_person, height_person) in self.person_positions:
-                    pygame.draw.rect(self.color_surface, self.black, ((x_person, y_person), (width_person, height_person)), 10)
+                if self.display_debug:
+                    for (x_person, y_person, width_person, height_person) in self.person_positions:
+                        pygame.draw.rect(self.color_surface, self.black, ((x_person, y_person), (width_person, height_person)), 10)
 
             if self.record: np.save(self.folder_path+"/color/frame_"+str(self.frame), self.color_frame)
             
@@ -319,8 +418,8 @@ class TopDownViewRuntime(object):
                         last_coordinate = last_head_locations[d.index(min(d))]
                         id_to_add = last_coordinate[3]
                     else:
-                        if len(d)>0:
-                            print(min(d))
+                        # if len(d)>0:
+                        #     print(min(d))
                         self.head_id_count += 1
                         id_to_add = self.head_id_count
                 else:
@@ -346,17 +445,18 @@ class TopDownViewRuntime(object):
                 self.head_squares = []
                 for location in self.head_locations:
                     if self.body_detection_kinect:
-                        top, left, bottom, right = (100, 120, 200, 120)/location[2] * 1000
+                        top, left, bottom, right = (200, 200, 200, 200)/location[2] * 1000 # (100, 120, 200, 120)
                     else:
                         top, left, bottom, right = (700, 300, -50, 300) / location[2] * 1000
                     width = left+right
                     height = top+bottom
-                    pygame.draw.rect(self.color_surface, self.blue, ([location[0]-left, location[1]-top], (width, height)), 10)
-                    pygame.draw.circle(self.color_surface, self.green, [int(location[0]), int(location[1])], 20)
+                    if self.display_debug:
+                        pygame.draw.rect(self.color_surface, self.blue, ([location[0]-left, location[1]-top], (width, height)), 10)
+                        pygame.draw.circle(self.color_surface, self.green, [int(location[0]), int(location[1])], 20)
                     self.head_squares.append((([location[0]-left, location[1]-top], (width, height)), location[3]))
 
     def mask_detection_color(self, og_image, head_id, show=False):
-
+        if show: cv2.imshow("og_image" + str(head_id), imutils.resize(og_image, width=200))
         dlib_image = og_image.copy()
         image = imutils.resize(dlib_image, width=500)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -364,7 +464,7 @@ class TopDownViewRuntime(object):
 
         for (i, rect) in enumerate(rects):
             face_image = image[max(rect.top(), 0):max(rect.bottom(), 0), max(rect.left(), 0):max(rect.right(), 0)]
-            if show: cv2.imshow("detected_image", imutils.resize(face_image, width=200))
+            if show: cv2.imshow("detected_image"+str(head_id), imutils.resize(face_image, width=200))
 
             shape = self.predictor(gray, rect)
             shape = face_utils.shape_to_np(shape)
@@ -442,10 +542,10 @@ class TopDownViewRuntime(object):
                     cv2.imshow("quantized", imutils.resize(c, width=300))
 
                 if diff < 100:
-                    if show: print("geen mondmasker", diff)
+                    if show: print("geen mondmasker", head_id,  int(diff))
                     return "no mask"
                 else:
-                    if show: print("wel een mondmasker", diff)
+                    if show: print("wel een mondmasker", head_id,  int(diff))
                     return "mask"
             else:
                 print("turned too much", min(abs(shape[42][0] - shape[0][0]), abs(shape[39][0] - shape[16][0])))
@@ -549,9 +649,9 @@ class TopDownViewRuntime(object):
         # cv2.imshow("Frame", frame)
         # key = cv2.waitKey(1) & 0xFF
 
-    def mask_detection(self):
+    def mask_detection(self, machine=True, color=True):
         if self.first_frame:
-            timer = cv2.getTickCount()
+
 
             self._frameRGB = self.color_frame.reshape((1080, 1920, -1)).astype(np.uint8)
             self._frameRGB = cv2.resize(self._frameRGB, (0, 0), fx=1,
@@ -564,14 +664,11 @@ class TopDownViewRuntime(object):
                              max(int(head_square[0][0]), 0):int(head_square[0][0] + head_square[1][0])]
                 head_image = cv2.cvtColor(head_image, cv2.COLOR_RGB2BGR)
 
-                machine = False
-                color = True
-
                 if machine:
                     mask_code_machine = self.mask_detection_machine(head_image, head_id)
 
                 if color:
-                    mask_code_color = self.mask_detection_color(head_image, head_id, show=False)
+                    mask_code_color = self.mask_detection_color(head_image, head_id, show=True)
 
                 if not machine and color:
                     mask_code_machine = mask_code_color
@@ -586,12 +683,29 @@ class TopDownViewRuntime(object):
                 else:
                     mask_code = mask_code_machine
 
+                print(head_id, mask_code)
+
                 if mask_code is not None:
                     if head_id not in self.body_status.keys(): self.body_status[head_id] = {}
-                    self.body_status[head_id]["mask"] = mask_code
+                    if "count_mask" not in self.body_status[head_id].keys(): self.body_status[head_id]["count_mask"] = 0
+                    if "count_no_mask" not in self.body_status[head_id].keys(): self.body_status[head_id]["count_no_mask"] = 0
+                    minimum_count = 1
+                    if mask_code == "mask":
+                        self.body_status[head_id]["count_mask"] += 1
+                        self.body_status[head_id]["count_no_mask"] = 0
+                        if self.body_status[head_id]["count_mask"] >= minimum_count:
+                            self.body_status[head_id]["mask"] = mask_code
+                    else:
+                        self.body_status[head_id]["count_mask"] = 0
+                        self.body_status[head_id]["count_no_mask"] += 1
+                        if self.body_status[head_id]["count_no_mask"] >= minimum_count:
+                            self.body_status[head_id]["mask"] = mask_code
 
-            if (self.sensor and self._kinect.has_new_color_frame()):
-                fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
-                fps_text = self.bigfont.render(str(fps), False, self.black)
-                text_coordinate = (50, 50)
-                self.color_surface.blit(fps_text, text_coordinate)
+
+
+
+
+
+if __name__ == "__main__":
+    interface = TopDownViewRuntime()
+    interface.hands_too_close(500)

@@ -13,6 +13,22 @@ class user_interface_class(TopDownViewRuntime):
     def __init__(self):
         self.init()
 
+        self.sensor = True
+        self.record = False
+
+        self.body_detection_kinect = True
+
+        self.enable_mask_detection = True
+        self.mask_detection_by_color = True
+        self.mask_detection_by_machine = False
+
+        self.display_debug = True
+
+        self.draw_id = False
+        self.draw_fps = False
+
+        self.draw_hands = True
+
     def draw_heads(self):
         combos = []
         head_coordinates = self.convert_to_coordinates(self.head_locations)
@@ -51,7 +67,7 @@ class user_interface_class(TopDownViewRuntime):
                         pygame.draw.line(self.topdown_surface, (255, 0, 0), self.coordinate_to_pixel(coordinate),
                                          self.coordinate_to_pixel(second_coordinate), 5)
                         if distance > 0:
-                            textsurface = self.myfont.render(str(round(distance / 1000, 1)).replace(".", ",") + " m",
+                            textsurface = self.myfont.render(str(round(distance / 1000, 3)).replace(".", ",") + " m",
                                                              False, (0, 0, 255))
                             text_coordinate = self.coordinate_to_pixel(self.get_middle(coordinate, second_coordinate))
 
@@ -62,9 +78,10 @@ class user_interface_class(TopDownViewRuntime):
                                3)
             pygame.draw.circle(self.topdown_surface, inner_circle_color, self.coordinate_to_pixel(coordinate), 20)
 
-            textsurface = self.myfont.render(str(head[3]), False, (0, 0, 255))
-            text_coordinate = self.coordinate_to_pixel(coordinate)
-            text_surfaces_to_draw.append([textsurface, text_coordinate])
+            if self.display_debug and self.draw_id:
+                textsurface = self.myfont.render(str(head[3]), False, (0, 0, 255))
+                text_coordinate = self.coordinate_to_pixel(coordinate)
+                text_surfaces_to_draw.append([textsurface, text_coordinate])
 
         for textsurface, text_coordinate in text_surfaces_to_draw:
             pygame.draw.rect(self.topdown_surface, self.gray, ((text_coordinate[0] - 5, text_coordinate[1] - 5), (
@@ -73,7 +90,7 @@ class user_interface_class(TopDownViewRuntime):
             textsurface.get_size()[0] + 10, textsurface.get_size()[1] + 10)), 3)
             self.topdown_surface.blit(textsurface, text_coordinate)
 
-        if not self.body_detection_kinect:
+        if not self.body_detection_kinect and self.display_debug:
             if self.head_locations is not None:
                 for head_location in self.head_locations:
                     pygame.draw.circle(self.color_surface, self.red, (head_location[0], head_location[1]), 10, 0)
@@ -120,14 +137,14 @@ class user_interface_class(TopDownViewRuntime):
         pygame.init()
         self._clock = pygame.time.Clock()
         self._infoObject = pygame.display.Info()
-        self._screen = pygame.display.set_mode((1430,650), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
+        self._screen = pygame.display.set_mode((2050,650), pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.RESIZABLE, 32)
         self.topdown_surface = pygame.Surface(self.topdown_surface_size, 0, 32)
         self.color_surface = pygame.Surface((1920, 1080), 0, 32)
         self.info_surface = pygame.Surface((400,800), 0,32)
         pygame.display.set_caption('Topdown view')
         pygame.font.init()
         self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
-        self.bigfont = pygame.font.SysFont('Comic Sans MS', 300)
+        self.bigfont = pygame.font.SysFont('Comic Sans MS', 200)
         self.draw_background(self.topdown_surface)
         self._screen.fill(self.white)
         self.head_id_count = 0
@@ -137,8 +154,6 @@ class user_interface_class(TopDownViewRuntime):
         self.first_frame = False
         self.body_status = {}
 
-        self.sensor = True
-        self.record = False
         self.topdown = True
 
         self.detector = dlib.get_frontal_face_detector()
@@ -151,7 +166,7 @@ class user_interface_class(TopDownViewRuntime):
 
         self.person_positions = []
         self.chest_depth = (0, 0)
-        self.body_detection_kinect = False
+
 
         if not self.sensor:
             self.folder_name = "kinect_recording_mondmasker"
@@ -172,11 +187,14 @@ class user_interface_class(TopDownViewRuntime):
 
         while True:
 
+            timer = cv2.getTickCount()
+
             if not self.sensor: self.frame_name = "frame_"+str(self.frame)+".npy"
 
             self.retrieve_data()
-            self.mask_detection()
-            self.hands_too_close(100)
+            if self.enable_mask_detection: self.mask_detection(machine=self.mask_detection_by_machine, color=self.mask_detection_by_color)
+            self.hands_too_close(150)
+
 
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -191,10 +209,18 @@ class user_interface_class(TopDownViewRuntime):
 
             self.draw_heads()
 
+            if (self.sensor and self._kinect.has_new_color_frame()) and self.display_debug and self.draw_fps:
+                fps = int(cv2.getTickFrequency() / (cv2.getTickCount() - timer))
+                fps_text = self.bigfont.render(str(fps), False, self.black)
+                text_coordinate = (50, 50)
+                self.color_surface.blit(fps_text, text_coordinate)
+
             self.draw_foreground()
 
             self.frame = int((time.time()-self.begin_time)*self.fps)
             if not self.sensor and self.frame > self.last_frame: break
+
+
 
 if __name__ == "__main__":
     interface = user_interface_class()

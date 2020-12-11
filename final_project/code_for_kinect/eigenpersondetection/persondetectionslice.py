@@ -22,7 +22,9 @@ def detect_persons(img):
                                             padding=(8, 8), scale=1.05)
     rects = np.array([[4.8 * x, 4.8 * y, 4.8 * (w), 4.8 * (h)] for (x, y, w, h) in rects])
     pick = non_max_suppression(rects, probs=None, overlapThresh=0.3)
-    return pick
+    rects = [[int(sub_element) for sub_element in element] for element in rects]
+    # print(rects, pick)
+    return rects
 
 
 def add_rectangle(img, array, type_rect, color=(255, 0, 0)):
