@@ -329,10 +329,10 @@ def mask_due_color(img, faces=None):
 
     for pos in positions:
         diff_mouth, diff_nose = mouth_to_forehead_difference(img, pos)
-        if diff_nose < 75:
-            if diff_mouth < 75:
-                display_wear_a_mask(img, pos, 0)
-            else:
+        if diff_mouth < 75:
+            display_wear_a_mask(img, pos, 0)
+        else:
+            if diff_nose < 75:
                 display_wear_properly(img, pos, 0)
 
     pass
